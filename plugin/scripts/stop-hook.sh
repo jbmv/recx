@@ -10,6 +10,6 @@
 if command -v recx >/dev/null 2>&1 && recx hook stop --help >/dev/null 2>&1; then
   recx hook stop
 elif command -v uvx >/dev/null 2>&1; then
-  uvx --quiet --from 'recx-cli>=0.0.2' recx hook stop 2>/dev/null
+  uvx --quiet --from 'recx-cli>=0.0.4' recx hook stop 2>/dev/null
 fi
 exit 0

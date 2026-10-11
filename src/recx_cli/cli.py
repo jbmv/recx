@@ -76,15 +76,22 @@ def build_parser() -> argparse.ArgumentParser:
         "RECX_STOP_HOOK=block (default) blocks the stop while RECX.yaml is invalid, "
         "warn only gives feedback, off does nothing.",
     )
+    hook_sub.add_parser(
+        "session-start",
+        help="SessionStart hook: record HEAD so the Stop hook can remind about manifest drift",
+        description="Read Claude Code's SessionStart hook JSON on stdin and record the "
+        "repository's HEAD for the session. Always exits 0 with no output. "
+        "RECX_DRIFT_REMINDER=off or RECX_STOP_HOOK=off does nothing.",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "hook":
-        from recx_cli.hook import stop
+        from recx_cli.hook import session_start, stop
 
-        return stop()
+        return session_start() if args.hook_command == "session-start" else stop()
     if args.command == "evidence":
         return evidence(args.path, args.list, args.only)
     target = Path(args.path)

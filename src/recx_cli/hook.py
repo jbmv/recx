@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from recx_cli import drift
 from recx_cli.check import Unreadable, check_file, format_problem
 
 MANIFEST = "RECX.yaml"
@@ -41,44 +42,89 @@ def _manifest_dir(cwd: str) -> Path:
     return start
 
 
-def _run() -> None:
-    if _mode() == "off":
-        return
+def _read_event() -> tuple[dict, Path] | None:
     raw = sys.stdin.read()
     if not raw.strip():
-        return
+        return None
     event = json.loads(raw)
     if not isinstance(event, dict):
-        return
+        return None
     cwd = event.get("cwd")
     if not isinstance(cwd, str) or not cwd:
-        return
-    manifest = _manifest_dir(cwd) / MANIFEST
+        return None
+    return event, _manifest_dir(cwd)
+
+
+def _validity(event: dict, top: Path) -> tuple[bool, str | None]:
+    """(manifest is valid, output to print). Knows nothing about drift."""
+    manifest = top / MANIFEST
     if not manifest.is_file():
-        return
+        return False, None
     try:
         problems = check_file(manifest, repo=True)
     except Unreadable:
-        return
+        return False, None
     if not problems:
-        return
+        return True, None
     lines = "\n".join(format_problem(MANIFEST, p) for p in problems)
     if _mode() == "block" and event.get("stop_hook_active") is not True:
         reason = (
             f"{MANIFEST} is invalid. Fix every problem below, using the {SKILL} skill, "
             f"then check it with `recx check` (or `uvx --from recx-cli recx check`):\n{lines}"
         )
-        print(json.dumps({"decision": "block", "reason": reason}))
-    else:
-        still = " still" if event.get("stop_hook_active") is True else ""
-        context = (
-            f"{MANIFEST} is{still} invalid. The {SKILL} skill explains how to fix it:\n{lines}"
-        )
-        print(
-            json.dumps(
-                {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": context}}
-            )
-        )
+        return False, json.dumps({"decision": "block", "reason": reason})
+    still = " still" if event.get("stop_hook_active") is True else ""
+    context = f"{MANIFEST} is{still} invalid. The {SKILL} skill explains how to fix it:\n{lines}"
+    return False, json.dumps(
+        {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": context}}
+    )
+
+
+def _drift(event: dict, top: Path) -> str | None:
+    try:
+        session = event.get("session_id")
+        text = drift.reminder(session if isinstance(session, str) else None, top)
+    except BaseException:  # noqa: BLE001 - the drift path must never block or raise
+        return None
+    if text is None:
+        return None
+    return json.dumps({"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": text}})
+
+
+def _run() -> None:
+    if _mode() == "off":
+        return
+    parsed = _read_event()
+    if parsed is None:
+        return
+    event, top = parsed
+    valid, output = _validity(event, top)
+    if output is not None:
+        print(output)
+    elif valid:
+        extra = _drift(event, top)
+        if extra is not None:
+            print(extra)
+
+
+def _session_start() -> None:
+    if _mode() == "off" or not drift.enabled():
+        return
+    parsed = _read_event()
+    if parsed is None:
+        return
+    event, top = parsed
+    session = event.get("session_id")
+    if isinstance(session, str):
+        drift.session_start(session, top)
+
+
+def session_start() -> int:
+    try:
+        _session_start()
+    except BaseException:  # noqa: BLE001 - a hook failure must not block the session
+        pass
+    return 0
 
 
 def stop() -> int:

@@ -78,6 +78,12 @@ the next stop, the hook lets the session end and leaves a warning instead. The u
 hook with `RECX_STOP_HOOK`: `block` (the default), `warn`, or `off`. Repositories without a
 `RECX.yaml` are never checked.
 
+Separately, the hook gives a non-blocking reminder when the manifest is valid but may be stale.
+If files at or under a module's `path` changed during the session (committed, uncommitted or
+untracked) and `RECX.yaml` did not, the hook names those modules and asks you to check whether
+the manifest still describes them. It never blocks, it reminds at most once per session for a
+given set of modules, and `RECX_DRIFT_REMINDER=off` turns it off.
+
 ## Reading someone else's manifest
 
 When you read a RECX.yaml from another repository to reuse its work:
