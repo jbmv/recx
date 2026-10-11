@@ -409,3 +409,16 @@ def test_session_start_script_is_silent_and_zero_without_recx(repo, tmp_path):
     env = {"PATH": str(bindir), "CLAUDE_PLUGIN_DATA": str(tmp_path / "data")}
     r = sh(START_SCRIPT, json.dumps({"session_id": "x", "cwd": str(repo)}), env)
     assert (r.returncode, r.stdout) == (0, "")
+
+
+def test_session_start_prunes_old_state_files(capsys, monkeypatch, tmp_path, repo):
+    data = tmp_path / "data"
+    data.mkdir(parents=True, exist_ok=True)
+    old, recent = data / "old-session.json", data / "recent-session.json"
+    for f in (old, recent):
+        f.write_text('{"head": "abcdef1", "reminded": []}')
+    month_ago = __import__("time").time() - 31 * 86400
+    os.utime(old, (month_ago, month_ago))
+    start(capsys, monkeypatch, repo)
+    assert not old.exists()
+    assert recent.exists() and state_file(tmp_path).exists()

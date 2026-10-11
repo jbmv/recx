@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 from recx_cli.check import parse
@@ -92,10 +93,28 @@ def head_of(top: Path) -> str | None:
     return value if _HEAD.fullmatch(value) else None
 
 
+STATE_MAX_AGE_DAYS = 30
+
+
+def prune_state(max_age_days: int = STATE_MAX_AGE_DAYS) -> None:
+    """Delete session state files older than max_age_days; one is written per session."""
+    try:
+        cutoff = time.time() - max_age_days * 86400
+        for path in state_dir().glob("*.json"):
+            try:
+                if path.stat().st_mtime < cutoff:
+                    path.unlink()
+            except OSError:
+                continue
+    except OSError:
+        pass
+
+
 def session_start(session_id: str, top: Path) -> None:
     """Record HEAD for the session. Skips when there is no manifest or the reminder is off."""
     if not enabled() or not (top / MANIFEST).is_file():
         return
+    prune_state()
     head = head_of(top)
     if head:
         write_state(session_id, {"head": head, "reminded": []})
