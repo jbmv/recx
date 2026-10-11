@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "recx-cli"
-version = "0.0.2"
+version = "0.0.3"
 description = "Validator for RECX.yaml manifests: the recx check command."
 readme = "README.md"
 requires-python = ">=3.10"
