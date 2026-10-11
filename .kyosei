@@ -1,0 +1,13 @@
+# Kyosei store link, written by `kyo init` (KYO-54/KYO-56).
+#
+# This project's store -- its records, its ideas/ intake layer, its shift notes,
+# its evidence artifacts and the frozen briefs quoting all of them -- lives
+# OUTSIDE this repository, at the path below, committed to its own git repository
+# there. This one-line pointer is the only thing about the store that is
+# committed here.
+#
+# store: read by kyosei.config.resolve_layout, which is how every `kyo` command
+# finds this project. A path starting with ~ resolves against the current user's
+# home directory (so this file survives being cloned onto another machine); a
+# relative path resolves against this file's own directory.
+store: ~/kyosei/recx
