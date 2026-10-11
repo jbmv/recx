@@ -31,8 +31,9 @@ recx's own validator checks both.
 ## The file
 
 - The filename is exactly `RECX.yaml`, at the repository root. There is one per repository.
-  That fixed name is what makes manifests findable: searching code for the filename (on
-  GitHub, `path:RECX.yaml`) returns only manifests.
+  That fixed name is what makes manifests findable: searching code for the filename returns
+  only manifests. On GitHub, signed in, search code for `path:/(^|\/)recx\.ya?ml$/i`. That
+  query also catches misspellings, so keep only root-level files named exactly `RECX.yaml`.
 - It is UTF-8 YAML 1.2. JSON is valid YAML, so a tool may write JSON into it.
 - It is at most 64 KiB.
 - Quote values that YAML would otherwise read as numbers: `recx: "0.1"`, and a commit hash
