@@ -246,6 +246,8 @@ def test_build_produces_sdist_and_wheel(tmp_path):
         names = z.namelist()
         tops = {n.split("/")[0] for n in names}
         assert "recx_cli" in tops and "recx" not in tops
+        assert "recx_cli/index.py" in names
+        assert not any(n.endswith("index.schema.json") for n in names)
         packaged = z.read("recx_cli/recx.schema.json")
         entry = [n for n in names if n.endswith("entry_points.txt")]
         assert "recx = recx_cli.cli:main" in z.read(entry[0]).decode()

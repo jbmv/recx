@@ -22,9 +22,13 @@ def _escape(ch: str) -> str:
     return "\\U%08x" % n
 
 
+_KEEP = frozenset("\n\t")  # multi-line fields (description, extract.notes) need them; JSON encodes them
+
+
 def _normalise_str(text: str) -> str:
     return "".join(
-        _escape(c) if unicodedata.category(c) in ("Cf", "Cc") else c for c in text
+        _escape(c) if c not in _KEEP and unicodedata.category(c) in ("Cf", "Cc") else c
+        for c in text
     )
 
 

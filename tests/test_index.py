@@ -136,9 +136,27 @@ def test_schema_rejects(mutate):
         validate(doc)
 
 
-def test_schema_not_in_wheel():
-    wheels = sorted((ROOT / "dist").glob("*.whl")) if (ROOT / "dist").exists() else []
-    if not wheels:
-        pytest.skip("no wheel built")
-    names = zipfile.ZipFile(wheels[-1]).namelist()
-    assert not any("index.schema.json" in n for n in names)
+def test_newline_and_tab_are_kept():
+    out = project({"description": "First paragraph.\n\n\tSecond, indented.", "notes\u202e": 1})
+    assert out["description"] == "First paragraph.\n\n\tSecond, indented."
+
+
+def _recx_defs_as_indexed():
+    """recx.schema.json's $defs, transformed the way index.schema.json's copy was made."""
+    defs = json.loads((ROOT / "spec" / "recx.schema.json").read_text())["$defs"]
+    defs = {k: v for k, v in defs.items() if k != "extension"}
+    for name in ("module", "evidence"):
+        defs[name] = {k: v for k, v in defs[name].items() if k != "patternProperties"}
+    ev = dict(defs["evidence"])
+    ev["properties"] = {k: v for k, v in ev["properties"].items() if k not in ("setup", "run")}
+    ev["required"] = ["id", "covers"]
+    ev["description"] = "Evidence as projected: setup and run are never indexed."
+    defs["evidence"] = ev
+    return defs
+
+
+def test_shared_defs_do_not_drift_from_the_manifest_schema():
+    index_defs = json.loads((ROOT / "spec" / "index.schema.json").read_text())["$defs"]
+    expected = _recx_defs_as_indexed()
+    for name, value in expected.items():
+        assert index_defs[name] == value, f"$defs/{name} differs from recx.schema.json"
