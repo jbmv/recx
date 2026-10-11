@@ -36,8 +36,13 @@ recx's own validator checks both.
   query also catches misspellings, so keep only root-level files named exactly `RECX.yaml`.
 - It is UTF-8 YAML 1.2. JSON is valid YAML, so a tool may write JSON into it.
 - It is at most 64 KiB.
-- Quote values that YAML would otherwise read as numbers: `recx: "0.1"`, and a commit hash
-  made only of digits.
+- It uses no anchors (`&`), aliases (`*`) or merge keys (`<<`), and no mapping repeats a key.
+  A manifest never needs them, and a hostile one can use them to mislead or exhaust the
+  program reading it.
+- Many YAML parsers still follow YAML 1.1, which reads some unquoted values as numbers,
+  booleans or dates. Quote any value that could be read that way, so the manifest reads the
+  same everywhere: `recx: "0.1"`, `date: "2026-10-01T14:03:00Z"`, a commit hash made only of
+  digits, and words like `yes`, `no`, `on` and `off`.
 
 ## Top-level keys
 
@@ -191,6 +196,12 @@ JSON Schema cannot express these rules. A validator MUST check them as well:
    directory exactly when it ends in `/`.
 4. The repository's license file agrees with `license`.
 5. The file is at most 64 KiB.
+6. The file uses no anchors, aliases or merge keys, and no mapping repeats a key.
+
+Rules 3 and 4 depend on the repository around the manifest. The other four depend only on the
+file. `spec/examples/invalid/` holds manifests the schema rejects; `spec/examples/invalid-rules/`
+holds manifests the schema accepts that break one of rules 1, 2, 5 or 6. Each file's first line
+names the rule it breaks.
 
 ## Trust
 
