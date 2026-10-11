@@ -27,7 +27,7 @@ manifest, and the Claude Code plugin checks it whenever a session ends, so it st
 the code changes. No hosted service is involved, because the fixed filename serves as the index.
 On GitHub, manifests can be found by searching code for `path:/(^|\/)recx\.ya?ml$/i`.
 
-## A manifest
+## The manifest
 
 ```yaml
 recx: "0.1"
