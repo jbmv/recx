@@ -49,6 +49,7 @@ modules:
       type: cli
       entrypoints:
         - "recx check [PATH] [--no-repo]"
+        - "recx evidence [PATH] [--list] [--only ID ...]"
         - "recx hook stop"
     requires:
       packages:
@@ -72,6 +73,18 @@ modules:
     extract:
       method: copy
       notes: Installing through the marketplace is the intended route; copying plugin/ works but the hook then needs recx-cli 0.0.2 or later.
+  - id: action
+    path: action.yml
+    summary: A composite GitHub Action that runs recx check, and optionally recx evidence, in a repository's CI.
+    interface:
+      type: github-action
+      entrypoints:
+        - "uses: jbmv/recx@main"
+    requires:
+      modules: [validator]
+    extract:
+      method: copy
+      notes: Referencing it with "uses:" in a workflow is the intended route; copying action.yml works but it then installs recx-cli from PyPI like any user.
 evidence:
   - id: schema-is-valid
     summary: The schema is itself a valid JSON Schema 2020-12 document.

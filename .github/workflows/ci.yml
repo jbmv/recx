@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: uv sync
+      - run: uv run pytest
+      # Test the checked-out recx-cli, not the PyPI release: `from: .` installs from the workspace.
+      - uses: ./
+        with:
+          evidence: true
+          from: .
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate --strict .
+      - run: claude plugin validate --strict plugin

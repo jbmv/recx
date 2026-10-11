@@ -33,3 +33,20 @@ The guide is the same text the plugin's skill uses, so both routes give the same
 
 Start from [spec/examples/valid/minimal.yaml](spec/examples/valid/minimal.yaml), add to it from
 the spec, and run `recx check` (`pip install recx-cli`, or `uvx --from recx-cli recx check`).
+
+## Optional: check the manifest in CI
+
+If you want CI to keep the manifest valid and to rerun its evidence, add the recx Action to a
+workflow:
+
+```yaml
+- uses: actions/checkout@v7
+- uses: jbmv/recx@main
+  with:
+    evidence: true
+```
+
+It runs `recx check`, and with `evidence: true` also `recx evidence`, which reruns your
+repository's own evidence commands in your CI. For public repositories on GitHub's standard
+runners that costs nothing. Leave `evidence` out to validate only; `path` and `version` inputs
+are available too.

@@ -1,4 +1,4 @@
-"""Command line: `recx check [PATH] [--no-repo]`."""
+"""Command line: `recx check`, `recx evidence`, `recx hook stop`."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ from importlib import metadata
 from pathlib import Path
 
 from recx_cli.check import Unreadable, check_file, format_problem
+from recx_cli.evidence import HELP as EVIDENCE_HELP
+from recx_cli.evidence import evidence
 
 
 def _version() -> str:
@@ -45,6 +47,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip the checks that look at the repository (rule 3: module paths exist)",
     )
+    ev = sub.add_parser(
+        "evidence",
+        help="run a manifest's evidence commands (your own repository or a sandbox only)",
+        description=EVIDENCE_HELP,
+    )
+    ev.add_argument(
+        "path",
+        nargs="?",
+        default="RECX.yaml",
+        metavar="PATH",
+        help="a manifest file, or a directory holding RECX.yaml (default: ./RECX.yaml)",
+    )
+    ev.add_argument(
+        "--list", action="store_true", help="print each selected entry's commands without running anything"
+    )
+    ev.add_argument("--only", nargs="+", metavar="ID", help="run only the named evidence entries")
     hook = sub.add_parser(
         "hook",
         help="entry points for Claude Code hooks",
@@ -67,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
         from recx_cli.hook import stop
 
         return stop()
+    if args.command == "evidence":
+        return evidence(args.path, args.list, args.only)
     target = Path(args.path)
     if target.is_dir():
         target = target / "RECX.yaml"

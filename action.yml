@@ -1,0 +1,39 @@
+name: recx
+description: Validate a RECX.yaml manifest with recx check, and optionally rerun its evidence with recx evidence.
+author: jbmv
+branding:
+  icon: check-circle
+  color: blue
+inputs:
+  path:
+    description: A manifest file, or a directory holding RECX.yaml.
+    default: "."
+  version:
+    description: "recx-cli version spec appended to the package name, for example ==0.0.2 or >=0.0.2. Empty means the latest release."
+    default: ""
+  evidence:
+    description: "Set to true to also run recx evidence, which runs the manifest's own commands in this job."
+    default: "false"
+  from:
+    description: "Install recx-cli from this local path or URL instead of PyPI. Overrides version. Used to test recx itself."
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v10.3.0
+    - name: recx check
+      shell: bash
+      env:
+        RECX_PATH: ${{ inputs.path }}
+        RECX_VERSION: ${{ inputs.version }}
+        RECX_FROM: ${{ inputs.from }}
+      run: |
+        source="${RECX_FROM:-recx-cli${RECX_VERSION}}"
+        echo "RECX_SOURCE=$source" >> "$GITHUB_ENV"
+        uvx --from "$source" recx check "$RECX_PATH"
+    - name: recx evidence
+      if: inputs.evidence == 'true'
+      shell: bash
+      env:
+        RECX_PATH: ${{ inputs.path }}
+      run: uvx --from "$RECX_SOURCE" recx evidence "$RECX_PATH"
