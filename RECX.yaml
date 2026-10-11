@@ -13,6 +13,7 @@ capabilities:
   - define a manifest format describing a repository's reusable modules to coding agents
   - validate a RECX.yaml manifest with any JSON Schema 2020-12 validator
   - keep a repository's RECX.yaml valid as a Claude Code session ends
+  - search published manifests for reusable modules that match a planned task
 tags: [agents, manifest, code-reuse, discovery, json-schema]
 modules:
   - id: schema
@@ -50,6 +51,9 @@ modules:
       entrypoints:
         - "recx check [PATH] [--no-repo]"
         - "recx evidence [PATH] [--list] [--only ID ...]"
+        - "recx search QUERY... [--json] [--limit N] [--language TAG] [--interface TYPE] [--license ID]"
+        - "recx show OWNER/NAME [--json]"
+        - "recx_cli.search.search(query, limit=20) -> dict"
         - "recx hook stop"
     requires:
       packages:

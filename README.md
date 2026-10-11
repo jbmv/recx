@@ -59,22 +59,50 @@ anything listed can be reused without asking.
 - **Any other agent:** paste the prompt in [ADOPT.md](ADOPT.md).
 - **By hand:** start from the example above, then run `uvx --from recx-cli recx check`.
 
+Then add the GitHub topic `recx` to the repository, so the daily index finds it promptly.
+
+## Searching
+
+```sh
+recx search "retry an http request with exponential backoff"
+recx search parse rss feeds --language python --json
+recx show OWNER/NAME
+```
+
+`recx search` downloads the published index (https://jbmv.github.io/recx/v1/index.json),
+caches it for six hours, and ranks entries by keyword overlap with the query, weighting
+capabilities above summaries and descriptions. It returns every entry that shares a term with
+the query, ordered by score, and leaves the judgement of relevance to the agent reading the
+results. `--json` gives the structured form a tool or agent should use, and the same result is
+available from Python as `recx_cli.search.search()`. `recx show` prints one indexed entry in
+full. Neither command needs a GitHub token or runs anything from a repository.
+
+Every result is written by the repository's author and has been checked only against the
+schema. The output says so in a fixed `notice`, and the JSON lists the author-written paths in
+`untrusted`. The index never contains a manifest's `setup` or `run` commands. Before reusing
+anything, read the repository's licence file and its current `RECX.yaml`, and run its evidence
+only in a sandbox. [docs/design/search.md](docs/design/search.md) describes the index, the
+crawler and the ranking in full.
+
 ## What's here
 
 | | |
 |---|---|
 | [spec/](spec/) | The spec, its JSON Schema, and valid and invalid example manifests |
-| `recx-cli` on PyPI | `recx check`, the validator (`pip install recx-cli`) |
+| `recx-cli` on PyPI | `recx check`, `recx evidence`, `recx search` and `recx show` (`pip install recx-cli`) |
 | `@jbmv/recx` on npm | The schema and examples, for JavaScript tooling |
 | [plugin/](plugin/) | The Claude Code plugin; this repository is its marketplace |
+| [crawler/](crawler/) | The daily crawler that builds the search index, run by a scheduled workflow |
+| [docs/design/](docs/design/) | Design documents |
 | [RECX.yaml](RECX.yaml) | recx's own manifest |
 
 ## Status
 
 Experimental. The spec is a v0.1 draft and may change before 1.0; every manifest states the
 version it was written against. `recx check` enforces the whole spec except rule 4, that the
-license file matches `license`. The manifest, the validator and the plugin exist; search, the
-second part described above, is not built yet.
+license file matches `license`; the search crawler applies it as far as GitHub's licence
+detection allows. Search is in its first version: it ranks by keywords, has no synonym handling,
+and has no MCP server yet.
 
 ## Kyosei
 
