@@ -305,3 +305,22 @@ def test_check_text_rejects_over_64_kib_by_utf8_bytes():
     n = len(text.encode("utf-8"))
     assert check_text(text) == [Problem("/", f"file is {n} bytes, over the 64 KiB limit (rule 5)")]
     assert check_text("x" * (MAX_BYTES + 1))[0].message.endswith("over the 64 KiB limit (rule 5)")
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["recx: " + "[" * 20000, "a:\n" + "".join(" " * i + "b:\n" for i in range(1, 120))],
+    ids=["flow-brackets", "block-mappings"],
+)
+def test_deep_nesting_is_rejected_not_a_crash(text):
+    from recx_cli.check import check_text
+
+    problems = check_text(text)
+    assert len(problems) == 1 and "invalid YAML: nested" in problems[0].message
+
+
+def test_depth_limit_leaves_real_manifests_valid():
+    from recx_cli.check import check_file
+
+    for f in [ROOT / "RECX.yaml", *sorted((ROOT / "spec" / "examples" / "valid").glob("*.yaml"))]:
+        assert check_file(f, repo=False) == [], f

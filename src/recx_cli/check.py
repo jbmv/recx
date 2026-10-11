@@ -62,10 +62,29 @@ class ManifestError(Exception):
 _MERGE_TAG = "tag:yaml.org,2002:merge"
 
 
+# No valid manifest nests deeper than about six levels; the limit only stops hostile input from
+# exhausting the Python stack, which PyYAML's recursive composer would otherwise do.
+MAX_DEPTH = 32
+
+
 class StrictLoader(yaml.SafeLoader):
-    """SafeLoader that refuses anchors, aliases, merge keys and repeated keys."""
+    """SafeLoader that refuses anchors, aliases, merge keys, repeated keys and deep nesting."""
+
+    _depth = 0
 
     def compose_node(self, parent, index):
+        self._depth += 1
+        try:
+            if self._depth > MAX_DEPTH:
+                raise ManifestError(
+                    f"invalid YAML: nested deeper than {MAX_DEPTH} levels, which no manifest needs",
+                    self.peek_event().start_mark.line + 1,
+                )
+            return self._compose_checked(parent, index)
+        finally:
+            self._depth -= 1
+
+    def _compose_checked(self, parent, index):
         if self.check_event(yaml.events.AliasEvent):
             event = self.peek_event()
             raise ManifestError(
@@ -108,6 +127,8 @@ def parse(text: str) -> Any:
         return yaml.load(text, Loader=StrictLoader)  # noqa: S506 - SafeLoader subclass
     except ManifestError:
         raise
+    except RecursionError:  # backstop; MAX_DEPTH should stop this first
+        raise ManifestError("invalid YAML: nested too deeply to parse") from None
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
         problem = getattr(exc, "problem", None) or "invalid YAML"
