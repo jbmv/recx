@@ -12,6 +12,7 @@ status: experimental
 capabilities:
   - define a manifest format describing a repository's reusable modules to coding agents
   - validate a RECX.yaml manifest with any JSON Schema 2020-12 validator
+  - keep a repository's RECX.yaml valid as a Claude Code session ends
 tags: [agents, manifest, code-reuse, discovery, json-schema]
 modules:
   - id: schema
@@ -48,6 +49,7 @@ modules:
       type: cli
       entrypoints:
         - "recx check [PATH] [--no-repo]"
+        - "recx hook stop"
     requires:
       packages:
         - pkg:pypi/jsonschema
@@ -56,6 +58,20 @@ modules:
     extract:
       method: package
       package: pkg:pypi/recx-cli
+  - id: plugin
+    path: plugin/
+    summary: The Claude Code plugin, with the recx:manifest skill and a Stop hook that keeps RECX.yaml valid.
+    interface:
+      type: claude-code-plugin
+      entrypoints:
+        - "/plugin marketplace add jbmv/recx"
+        - "/plugin install recx@recx"
+        - "/recx:manifest"
+    requires:
+      modules: [validator]
+    extract:
+      method: copy
+      notes: Installing through the marketplace is the intended route; copying plugin/ works but the hook then needs recx-cli 0.0.2 or later.
 evidence:
   - id: schema-is-valid
     summary: The schema is itself a valid JSON Schema 2020-12 document.

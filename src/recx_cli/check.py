@@ -29,6 +29,11 @@ class Problem:
     message: str
 
 
+def format_problem(label: str, problem: Problem) -> str:
+    """One problem as `recx check` prints it."""
+    return f"{label}: {problem.pointer}: {problem.message}"
+
+
 # -- schema ---------------------------------------------------------------
 
 

@@ -1,0 +1,12 @@
+{
+  "name": "recx",
+  "owner": { "name": "James Bullard" },
+  "description": "Tools for RECX.yaml manifests: a skill to write one and a hook to keep it valid.",
+  "plugins": [
+    {
+      "name": "recx",
+      "source": "./plugin",
+      "description": "Write and maintain a RECX.yaml manifest, and keep it valid as a session ends."
+    }
+  ]
+}

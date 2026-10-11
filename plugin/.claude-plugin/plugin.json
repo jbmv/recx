@@ -1,0 +1,9 @@
+{
+  "name": "recx",
+  "version": "0.0.2",
+  "description": "Write and maintain a RECX.yaml manifest, and keep it valid as a session ends.",
+  "author": { "name": "James Bullard" },
+  "homepage": "https://github.com/jbmv/recx",
+  "repository": "https://github.com/jbmv/recx",
+  "license": "MIT"
+}

@@ -238,8 +238,8 @@ def test_build_produces_sdist_and_wheel(tmp_path):
     out = tmp_path / "dist"
     env = {k: v for k, v in __import__("os").environ.items() if k != "VIRTUAL_ENV"}
     subprocess.run(["uv", "build", "--out-dir", str(out)], cwd=ROOT, check=True, capture_output=True, env=env)
-    wheels = list(out.glob("recx_cli-0.0.1-*.whl"))
-    sdists = list(out.glob("recx_cli-0.0.1.tar.gz"))
+    wheels = list(out.glob("recx_cli-0.0.2-*.whl"))
+    sdists = list(out.glob("recx_cli-0.0.2.tar.gz"))
     assert len(wheels) == 1 and len(sdists) == 1
     with zipfile.ZipFile(wheels[0]) as z:
         names = z.namelist()

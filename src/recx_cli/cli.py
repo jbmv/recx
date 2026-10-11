@@ -7,7 +7,7 @@ import sys
 from importlib import metadata
 from pathlib import Path
 
-from recx_cli.check import Unreadable, check_file
+from recx_cli.check import Unreadable, check_file, format_problem
 
 
 def _version() -> str:
@@ -45,11 +45,28 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip the checks that look at the repository (rule 3: module paths exist)",
     )
+    hook = sub.add_parser(
+        "hook",
+        help="entry points for Claude Code hooks",
+        description="Commands that Claude Code hooks run. They read the hook's JSON on stdin.",
+    )
+    hook_sub = hook.add_subparsers(dest="hook_command", required=True, parser_class=_Parser)
+    hook_sub.add_parser(
+        "stop",
+        help="Stop hook: keep the repository's RECX.yaml valid as a session ends",
+        description="Read Claude Code's Stop hook JSON on stdin. Always exits 0. "
+        "RECX_STOP_HOOK=block (default) blocks the stop while RECX.yaml is invalid, "
+        "warn only gives feedback, off does nothing.",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "hook":
+        from recx_cli.hook import stop
+
+        return stop()
     target = Path(args.path)
     if target.is_dir():
         target = target / "RECX.yaml"
@@ -63,5 +80,5 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{label}: valid")
         return 0
     for p in problems:
-        print(f"{label}: {p.pointer}: {p.message}")
+        print(format_problem(label, p))
     return 1
