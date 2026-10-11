@@ -114,14 +114,19 @@ def parse(text: str) -> Any:
 # -- output hygiene -------------------------------------------------------
 
 
+# Control characters, plus the line separators and bidi controls a terminal would
+# otherwise act on: a bidi override can make echoed manifest text read differently
+# from what it is.
+_UNSAFE = re.compile(r"[^\x20-\x7e -\U0010ffff]|[؜‎‏ -‮⁦-⁩]")
+
+
 def _clean(text: str, limit: int = 200) -> str:
     if len(text) > limit:
         text = text[:limit] + "..."
-    return re.sub(
-        r"[^\x20-\x7e\u00a0-\U0010ffff]",
+    return _UNSAFE.sub(
         lambda m: "\\x%02x" % ord(m.group()) if ord(m.group()) < 256 else "\\u%04x" % ord(m.group()),
         text,
-    ).replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+    )
 
 
 def _show(value: Any) -> str:

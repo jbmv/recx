@@ -256,3 +256,11 @@ def test_build_produces_sdist_and_wheel(tmp_path):
 
     with tarfile.open(sdists[0]) as t:
         assert any(n.endswith("spec/recx.schema.json") for n in t.getnames())
+
+
+def test_bidi_controls_in_echoed_text_are_escaped():
+    from recx_cli.check import _clean
+
+    shown = _clean("evil‮txt.exe⁦x⁩\x1b[31m")
+    assert "‮" not in shown and "⁦" not in shown and "\x1b" not in shown
+    assert "\\u202e" in shown and "\\x1b" in shown
