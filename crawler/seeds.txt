@@ -1,0 +1,2 @@
+# Repositories the crawler always checks directly, one owner/name per line. Add by pull request.
+jbmv/recx

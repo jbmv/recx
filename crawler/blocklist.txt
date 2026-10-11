@@ -1,0 +1,1 @@
+# Owners (owner) or repositories (owner/name) the crawler never indexes, one per line, by pull request.

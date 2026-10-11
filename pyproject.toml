@@ -38,3 +38,4 @@ include = ["/src", "/spec", "/tests", "/README.md", "/LICENSE", "/pyproject.toml
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # lets tests import the crawler/ package, which is not in the wheel
