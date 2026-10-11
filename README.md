@@ -1,6 +1,7 @@
 # recx
 
-*res extra commercium*: things outside commerce.
+*res extra commercium*: things outside commerce. A way for agents to find reusable code from
+solo and small-team projects.
 
 A `RECX.yaml` at the root of a repository tells other people's coding agents what the repository
 does, which parts of it they can take on their own, and which checks show those parts work. recx
@@ -8,16 +9,20 @@ is that format, a validator for it, and a Claude Code plugin that keeps the file
 
 ## Why
 
-More software is being written than anyone can read. A useful MIT-licensed project gets a
-handful of views, and the next person who needs it builds it again.
+Coding agents have increased the amount of software that individuals and small teams produce.
+Much of it remains internal tooling, and the projects that are published are hard to find among
+the number of new repositories. Evaluating an unfamiliar open-source project also takes time, so
+writing a similar tool is often the quicker option, and comparable tools get written more than
+once.
 
-People can't keep up with that volume, but agents can. recx writes for them. Before an agent
-builds something, it can search for manifests, match its plan against what they offer, and
-reuse a module that already exists and passes its checks, recording the reuse in its own
-manifest.
+recx moves that search and evaluation to the agent doing the work. A manifest describes a
+project's capabilities, its separable modules and their interfaces, and the commands that
+verify them, in a fixed machine-readable form. An agent can compare a planned task with
+published manifests, check the evidence, and reuse a module, recording where it came from in
+the manifest of the project that took it.
 
-There is no service to run. The fixed filename is the index: on GitHub, search code for
-`path:/(^|\/)recx\.ya?ml$/i`.
+The fixed filename serves as the index, so no hosted service is involved. On GitHub, manifests
+can be found by searching code for `path:/(^|\/)recx\.ya?ml$/i`.
 
 ## A manifest
 
@@ -31,7 +36,7 @@ capabilities:
   - format a byte count as a human-readable size string
 ```
 
-Those six keys are the minimum. Most of the value is in the optional parts: modules with
+Those six keys are the minimum. The optional parts carry most of the information: modules with
 interfaces and extraction notes, evidence anyone can rerun, and records of what was reused from
 where. [spec/SPEC.md](spec/SPEC.md) defines every field, puts a length limit on every string,
 and sets out how to read a stranger's manifest safely.

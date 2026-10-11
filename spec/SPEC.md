@@ -7,11 +7,11 @@ written against, so a change never silently reinterprets an old file.
 
 ## Purpose
 
-A great deal of permissively licensed code is being written by people working alone, and much
-of it is never read. recx assumes the reader that will look is another person's coding agent,
-and gives it something to read. `RECX.yaml` says what a repository does, which of its parts can
-be taken on their own, how to take them, and which checks anyone can rerun to see that they
-work.
+recx is meant to let coding agents find and evaluate reusable code from solo and small-team
+projects, which are otherwise difficult to discover among the volume of new repositories.
+`RECX.yaml` states, in a fixed machine-readable form, what a repository does, which of its parts
+can be taken on their own, how to take them, and which checks anyone can rerun to confirm that
+they work.
 
 It complements `AGENTS.md` rather than replacing it. `AGENTS.md` tells an agent how to work
 *inside* a repository. `RECX.yaml` tells an agent working somewhere else what it can take
