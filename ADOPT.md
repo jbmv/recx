@@ -19,6 +19,13 @@ instead of blocks, or `RECX_STOP_HOOK=off` to turn the hook off.
 Claude Code does not announce plugin updates from third-party marketplaces. To receive them, run
 `/plugin`, open the Marketplaces tab, select `recx`, and choose **Enable auto-update**.
 
+## Making the repository findable
+
+Add the topic `recx` to the repository, either beside **About** on its GitHub page or with
+`gh repo edit OWNER/NAME --add-topic recx`. GitHub's code search indexes new and small
+repositories slowly, and sometimes not at all; the topic lets the daily index find the manifest
+within a day.
+
 ## With any other coding agent
 
 Paste this prompt:

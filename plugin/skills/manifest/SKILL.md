@@ -56,6 +56,9 @@ manifest. The spec covers what makes one *valid*.
    is how credit flows back to the source.
 7. **Status:** choose honestly. Most new work is `experimental`.
 8. Run `recx check` and fix everything it reports, then show the user the manifest.
+9. **Topic:** tell the user to add the GitHub topic `recx` to the repository, which makes it
+   findable by the recx index (`gh repo edit OWNER/NAME --add-topic recx`). This changes the
+   repository's public settings, so leave it to the user unless they ask you to do it.
 
 ## Keeping it current
 

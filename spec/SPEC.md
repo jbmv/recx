@@ -32,8 +32,14 @@ recx's own validator checks both.
 
 - The filename is exactly `RECX.yaml`, at the repository root. There is one per repository.
   That fixed name is what makes manifests findable: searching code for the filename returns
-  only manifests. On GitHub, signed in, search code for `path:/(^|\/)recx\.ya?ml$/i`. That
-  query also catches misspellings, so keep only root-level files named exactly `RECX.yaml`.
+  only manifests. In GitHub's web interface, signed in, search code for
+  `path:/(^|\/)recx\.ya?ml$/i`; the query also catches misspellings, so keep only root-level
+  files named exactly `RECX.yaml`. GitHub's code search API does not accept regular
+  expressions, so a program searches for `filename:RECX.yaml path:/` and applies the same
+  filter.
+- A repository with a manifest should also carry the GitHub topic `recx`. Code search indexes
+  new and small repositories slowly, and sometimes not at all; repository topics become
+  searchable quickly.
 - It is UTF-8 YAML 1.2. JSON is valid YAML, so a tool may write JSON into it.
 - It is at most 64 KiB.
 - It uses no anchors (`&`), aliases (`*`) or merge keys (`<<`), and no mapping repeats a key.

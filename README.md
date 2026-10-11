@@ -24,8 +24,11 @@ than write it again, recording where it came from in its own project's manifest.
 
 Taking part is meant to cost a repository little. One prompt produces a complete, valid
 manifest, and the Claude Code plugin checks it whenever a session ends, so it stays valid as
-the code changes. No hosted service is involved, because the fixed filename serves as the index.
-On GitHub, manifests can be found by searching code for `path:/(^|\/)recx\.ya?ml$/i`.
+the code changes. No hosted service is involved. The fixed filename and the GitHub topic `recx`
+serve as the index, and a scheduled workflow in this repository collects the valid manifests it
+finds into a static file each day. In GitHub's web interface, manifests can also be found by
+searching code for `path:/(^|\/)recx\.ya?ml$/i`; GitHub's code search API does not accept that
+regular expression.
 
 ## The manifest
 
