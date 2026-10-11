@@ -217,3 +217,13 @@ def test_script_never_passes_a_failing_status_through(tmp_path):
     uvx.chmod(0o755)
     r = run_script(json.dumps(event(tmp_path)), path=str(bindir))
     assert (r.returncode, r.stdout) == (0, "")
+
+
+def test_plugin_version_matches_recx_cli():
+    # Claude Code updates an installed plugin only when plugin.json's version string changes,
+    # so a release that changes the hooks must bump both together.
+    import tomllib
+
+    plugin = json.loads((ROOT / "plugin" / ".claude-plugin" / "plugin.json").read_text())
+    package = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    assert plugin["version"] == package

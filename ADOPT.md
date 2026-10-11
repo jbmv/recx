@@ -16,6 +16,9 @@ Then ask Claude to add a RECX.yaml. The plugin's `recx:manifest` skill writes th
 its Stop hook keeps it valid as the repository changes. Set `RECX_STOP_HOOK=warn` to get warnings
 instead of blocks, or `RECX_STOP_HOOK=off` to turn the hook off.
 
+Claude Code does not announce plugin updates from third-party marketplaces. To receive them, run
+`/plugin`, open the Marketplaces tab, select `recx`, and choose **Enable auto-update**.
+
 ## With any other coding agent
 
 Paste this prompt:
