@@ -16,3 +16,9 @@ __pycache__/
 
 # local notes for upstream Kyosei
 KYOSEI_ISSUE.md
+
+# personal development setup (Claude Code + Kyosei); local only
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.kyosei
