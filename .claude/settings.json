@@ -1,0 +1,104 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo brief --compact --session-start"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo sessions --hook"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo sweep && kyo doctor --hook"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo sessions --hook"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo sweep && kyo doctor --hook",
+            "timeout": 20
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo sessions --hook",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo check-clean --subagent-stop"
+          },
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo check-branch --subagent-stop --against main"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo check-push --pre-tool-use"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo check-command --pre-tool-use"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v kyo >/dev/null 2>&1 || { echo 'Kyosei CLI (kyo) is not on PATH, so this hook did not run. Install it: uv tool install kyosei (or pipx install kyosei), then start a new session' >&2; exit 127; }; kyo check-build --hook"
+          }
+        ]
+      }
+    ]
+  }
+}
