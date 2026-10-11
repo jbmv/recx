@@ -1,0 +1,38 @@
+name: index
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+concurrency:
+  group: index
+  cancel-in-progress: false
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: uv sync
+      # Any non-zero exit (error, partial crawl, shrink guard) fails the job: nothing is uploaded.
+      - run: uv run python -m crawler --out site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: uvx check-jsonschema --schemafile spec/index.schema.json site/v1/index.json
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: site
+  deploy:
+    needs: crawl
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.1
