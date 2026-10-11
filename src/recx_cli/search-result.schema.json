@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "recx search result",
+  "description": "The object printed by `recx search --json` and returned by recx_cli.search.search (docs/design/search.md, section 3). A minor version only adds optional fields.",
+  "type": "object",
+  "required": [
+    "recx_search",
+    "notice",
+    "untrusted",
+    "query",
+    "index",
+    "results"
+  ],
+  "properties": {
+    "recx_search": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "notice": {
+      "type": "string",
+      "minLength": 1
+    },
+    "untrusted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "query": {
+      "type": "object",
+      "required": [
+        "text",
+        "terms"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "index": {
+      "$ref": "#/$defs/index"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/result"
+      }
+    }
+  },
+  "$defs": {
+    "index": {
+      "type": "object",
+      "required": [
+        "url",
+        "format",
+        "generated_at",
+        "entries",
+        "fetched_at",
+        "stale"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "pattern": "^recx-index/1\\.[0-9]+$"
+        },
+        "generated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fetched_at": {
+          "type": "string"
+        },
+        "stale": {
+          "type": "boolean"
+        },
+        "stale_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "rank",
+        "score",
+        "matched_terms",
+        "matches",
+        "name_shared_with",
+        "source",
+        "manifest"
+      ],
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0
+        },
+        "matched_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matches": {
+          "type": "object",
+          "required": [
+            "capabilities",
+            "modules"
+          ],
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "modules": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "name_shared_with": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "manifest": {
+          "description": "Author-written, compact projection of the indexed manifest; constrained by spec/index.schema.json.",
+          "type": "object"
+        }
+      }
+    },
+    "source": {
+      "description": "What the crawler observed from GitHub's API.",
+      "type": "object",
+      "required": [
+        "full_name",
+        "url",
+        "default_branch",
+        "commit",
+        "blob_sha",
+        "manifest_url",
+        "detected_license",
+        "license_check",
+        "declared_repository",
+        "is_fork",
+        "parent",
+        "is_archived",
+        "stars",
+        "repo_created_at",
+        "pushed_at",
+        "found_by",
+        "first_indexed",
+        "last_verified"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "full_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$",
+          "maxLength": 200,
+          "description": "owner/name as GitHub reports it; the entry's identity."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[^\\s]+$",
+          "maxLength": 300
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "manifest_url": {
+          "type": "string",
+          "pattern": "^https://raw\\.githubusercontent\\.com/[^\\s]+$",
+          "maxLength": 400
+        },
+        "detected_license": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "license_check": {
+          "enum": [
+            "match",
+            "mismatch",
+            "undetected"
+          ]
+        },
+        "declared_repository": {
+          "enum": [
+            "absent",
+            "matches",
+            "differs"
+          ]
+        },
+        "is_fork": {
+          "type": "boolean"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$",
+          "description": "null unless is_fork."
+        },
+        "is_archived": {
+          "type": "boolean"
+        },
+        "stars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repo_created_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "pushed_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "found_by": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "code-search",
+              "topic",
+              "seed",
+              "recheck"
+            ]
+          }
+        },
+        "first_indexed": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        }
+      },
+      "if": {
+        "properties": {
+          "is_fork": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parent": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  }
+}

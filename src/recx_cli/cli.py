@@ -1,8 +1,10 @@
-"""Command line: `recx check`, `recx evidence`, `recx hook stop`."""
+"""Command line: `recx check`, `recx evidence`, `recx search`, `recx show`, `recx hook stop`."""
 
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import sys
 from importlib import metadata
 from pathlib import Path
@@ -10,6 +12,7 @@ from pathlib import Path
 from recx_cli.check import Unreadable, check_file, format_problem
 from recx_cli.evidence import HELP as EVIDENCE_HELP
 from recx_cli.evidence import evidence
+from recx_cli.index import _normalise_str
 
 
 def _version() -> str:
@@ -23,6 +26,77 @@ class _Parser(argparse.ArgumentParser):
     def error(self, message):  # argparse exits 2 already; keep it explicit
         self.print_usage(sys.stderr)
         self.exit(2, f"{self.prog}: error: {message}\n")
+
+
+def _index_options(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--refresh", action="store_true", help="fetch the index even if the cached copy is fresh")
+    p.add_argument("--offline", action="store_true", help="use the cached index and do not touch the network")
+    p.add_argument("--index-url", metavar="URL", help="index location (default: RECX_INDEX_URL, else the published index)")
+
+
+_FULL_NAME = re.compile(r"[A-Za-z0-9._-]+/[A-Za-z0-9._-]+")
+
+
+def _text(value, indent: str = "") -> str:
+    """One line of author or index text, with control and format characters escaped."""
+    line = " ".join(_normalise_str(str(value)).split())
+    return indent + line
+
+
+def _print_search(result: dict) -> None:
+    print(result["notice"])
+    print()
+    results = result["results"]
+    if not results:
+        print("no matches")
+        return
+    for r in results:
+        print(f"{r['rank']}. {_text(r['source'].get('full_name', ''))}  score {r['score']:.2f}")
+        summary = r["manifest"].get("summary")
+        if summary:
+            print(_text(summary, "     "))
+        for cap in r["matches"]["capabilities"][:3]:
+            print(_text("matches: " + cap, "     "))
+        if r["name_shared_with"]:
+            print(f"     name shared with {r['name_shared_with']} other indexed repositories")
+    print()
+    print("To see one in full: recx show OWNER/NAME")
+
+
+def _print_show(result: dict, full_name: str) -> None:
+    print(result["notice"])
+    print()
+    entry = result["entry"]
+    if entry is None:
+        print(f"{_text(full_name)} is not in the index")
+        return
+    print(_text(entry["source"].get("full_name", "")))
+    for line in _normalise_str(json.dumps(entry["manifest"], indent=2, ensure_ascii=False)).splitlines():
+        print("     " + line)
+
+
+def _run_index_command(args) -> int:
+    from recx_cli.search import IndexUnavailable, search, show
+
+    try:
+        if args.command == "search":
+            result = search(
+                " ".join(args.query), limit=args.limit, languages=args.language,
+                interfaces=args.interface, licenses=args.license,
+                refresh=args.refresh, offline=args.offline, index_url=args.index_url,
+            )
+        else:
+            result = show(args.full_name, refresh=args.refresh, offline=args.offline, index_url=args.index_url)
+    except IndexUnavailable as exc:
+        print(f"recx {args.command}: {_text(exc)}", file=sys.stderr)
+        return 1
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif args.command == "search":
+        _print_search(result)
+    else:
+        _print_show(result, args.full_name)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +137,29 @@ def build_parser() -> argparse.ArgumentParser:
         "--list", action="store_true", help="print each selected entry's commands without running anything"
     )
     ev.add_argument("--only", nargs="+", metavar="ID", help="run only the named evidence entries")
+    se = sub.add_parser(
+        "search",
+        help="search the published index of RECX.yaml manifests",
+        description="Search the published index for repositories whose manifests match QUERY. "
+        "Reads the index only; runs nothing from any manifest. "
+        "Exit status: 0 success (including no matches), 1 no index available, 2 usage error.",
+    )
+    se.add_argument("query", nargs="+", metavar="QUERY", help="what you are looking for; words are joined with spaces")
+    se.add_argument("--json", action="store_true", help="print the JSON object (see search-result.schema.json)")
+    se.add_argument("--limit", type=int, default=20, metavar="N", help="at most N results, 1 to 100 (default 20)")
+    se.add_argument("--language", action="append", default=[], metavar="TAG", help="keep entries using this language (repeatable)")
+    se.add_argument("--interface", action="append", default=[], metavar="TYPE", help="keep entries with a module of this interface type (repeatable)")
+    se.add_argument("--license", action="append", default=[], metavar="ID", help="keep entries with this licence (repeatable)")
+    _index_options(se)
+    sh = sub.add_parser(
+        "show",
+        help="print one full indexed entry",
+        description="Print the full indexed entry for OWNER/NAME. Reads the index only. "
+        "Exit status: 0 success (including not indexed), 1 no index available, 2 usage error.",
+    )
+    sh.add_argument("full_name", metavar="OWNER/NAME")
+    sh.add_argument("--json", action="store_true", help="print the JSON object")
+    _index_options(sh)
     hook = sub.add_parser(
         "hook",
         help="entry points for Claude Code hooks",
@@ -87,7 +184,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.command == "search" and not 1 <= args.limit <= 100:
+        parser.error("search: --limit must be between 1 and 100")
+    if args.command == "show" and not _FULL_NAME.fullmatch(args.full_name):
+        parser.error("show: expected OWNER/NAME, for example jbmv/recx")
+    if args.command in ("search", "show"):
+        return _run_index_command(args)
     if args.command == "hook":
         from recx_cli.hook import session_start, stop
 
