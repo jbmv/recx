@@ -22,7 +22,9 @@ modules:
       entrypoints:
         - "uvx check-jsonschema --schemafile spec/recx.schema.json RECX.yaml"
     extract:
-      method: copy
+      method: package
+      package: pkg:npm/%40jbmv/recx
+      notes: The schema is one self-contained file, so copying spec/recx.schema.json works too. In Python it ships inside recx-cli.
   - id: fixtures
     path: spec/examples/
     summary: Valid and invalid example manifests for testing any recx validator.
@@ -35,7 +37,9 @@ modules:
     requires:
       modules: [schema]
     extract:
-      method: copy
+      method: package
+      package: pkg:npm/%40jbmv/recx
+      notes: Shipped as @jbmv/recx/examples/*, or copy spec/examples/.
   - id: validator
     path: src/recx_cli/
     summary: The recx check command, which validates a RECX.yaml against the schema and the rules beyond it.
@@ -50,8 +54,8 @@ modules:
         - pkg:pypi/pyyaml
       modules: [schema]
     extract:
-      method: copy
-      notes: Not published yet. The package loads the schema from recx_cli/recx.schema.json, so copy spec/recx.schema.json there.
+      method: package
+      package: pkg:pypi/recx-cli
 evidence:
   - id: schema-is-valid
     summary: The schema is itself a valid JSON Schema 2020-12 document.
