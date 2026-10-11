@@ -53,7 +53,7 @@ def test_shape_and_schema():
     assert list(result) == ["recx_search", "notice", "untrusted", "query", "index", "results"]
     assert result["recx_search"] == "1.0"
     assert result["notice"] == NOTICE
-    assert result["untrusted"] == UNTRUSTED == ["/results/*/manifest"]
+    assert result["untrusted"] == UNTRUSTED == ["/results/*/manifest", "/results/*/matches"]
     assert result["query"] == {"text": QUERY, "terms": result["query"]["terms"]}
     assert "yaml" in result["query"]["terms"]
     assert result["index"] == {
@@ -168,9 +168,12 @@ def test_author_text_only_under_manifest():
     assert marker not in json.dumps(r["source"])
     assert marker not in NOTICE and marker not in json.dumps(UNTRUSTED)
     assert marker in json.dumps(r["manifest"])
-    # `matches.capabilities` quotes capability phrases, as the design's example does; the
-    # `untrusted` list names only /results/*/manifest.
+    # `matches.capabilities` quotes the author's capability phrases, so `untrusted` names it too:
+    # every path holding the marker must be covered by an `untrusted` pattern.
     assert r["matches"]["capabilities"] == [f"{marker} capability"]
+    for key, value in r.items():
+        if marker in json.dumps(value):
+            assert f"/results/*/{key}" in result["untrusted"], key
 
 
 def test_filters():

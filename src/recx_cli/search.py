@@ -20,7 +20,8 @@ NOTICE = (
     "RECX.yaml before reusing anything. "
     "See https://github.com/jbmv/recx/blob/main/spec/SPEC.md#trust."
 )
-UNTRUSTED = ["/results/*/manifest"]
+# `matches` quotes the author's capability phrases, so it is author text too.
+UNTRUSTED = ["/results/*/manifest", "/results/*/matches"]
 SHOW_UNTRUSTED = ["/entry/manifest"]
 
 Loader = Callable[..., LoadedIndex]
