@@ -1,5 +1,5 @@
 {
-  "name": "@recx/schema",
+  "name": "@jbmv/recx",
   "version": "0.0.1",
   "description": "The RECX.yaml manifest format: JSON Schema and example manifests.",
   "license": "MIT",
