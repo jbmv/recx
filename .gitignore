@@ -1,2 +1,8 @@
 # a dispatched worker's structured report — written here, ingested by `kyo report`, never committed (KYO-206)
 .kyosei-report.json
+
+# build output and local tooling
+dist/
+.venv/
+node_modules/
+*.tgz

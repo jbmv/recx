@@ -1,0 +1,19 @@
+# rule 1: module ids must be unique
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+modules:
+  - id: core
+    path: src/a.py
+    summary: A module.
+    interface: {type: library, entrypoints: ["f()"]}
+    extract: {method: copy}
+  - id: core
+    path: src/b.py
+    summary: A module.
+    interface: {type: library, entrypoints: ["f()"]}
+    extract: {method: copy}

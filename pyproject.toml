@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "recx-cli"
+version = "0.0.1"
+description = "Validator for RECX.yaml manifests: the recx check command."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "James Bullard" }]
+dependencies = [
+    "jsonschema[format-nongpl]>=4.18",
+    "pyyaml>=6",
+]
+
+[project.urls]
+Homepage = "https://github.com/jbmv/recx"
+Repository = "https://github.com/jbmv/recx"
+
+[project.scripts]
+recx = "recx_cli.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/recx_cli"]
+
+# The schema lives only in spec/; the wheel gets its copy at build time.
+[tool.hatch.build.targets.wheel.force-include]
+"spec/recx.schema.json" = "recx_cli/recx.schema.json"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/spec", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

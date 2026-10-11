@@ -1,0 +1,19 @@
+# rule 6: no anchors or aliases
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+modules:
+  - id: core
+    path: src/a.py
+    summary: A module.
+    interface: &iface {type: library, entrypoints: ["f()"]}
+    extract: {method: copy}
+  - id: other
+    path: src/b.py
+    summary: Another module.
+    interface: *iface
+    extract: {method: copy}

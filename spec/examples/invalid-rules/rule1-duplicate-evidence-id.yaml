@@ -1,0 +1,21 @@
+# rule 1: evidence ids must be unique
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+modules:
+  - id: core
+    path: src/a.py
+    summary: A module.
+    interface: {type: library, entrypoints: ["f()"]}
+    extract: {method: copy}
+evidence:
+  - id: tests
+    run: pytest
+    covers: [core]
+  - id: tests
+    run: pytest -x
+    covers: [core]

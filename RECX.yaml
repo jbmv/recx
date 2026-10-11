@@ -31,10 +31,27 @@ modules:
       entrypoints:
         - "spec/examples/valid/*.yaml: every file must validate"
         - "spec/examples/invalid/*.yaml: every file must be rejected, for the reason its first-line comment names"
+        - "spec/examples/invalid-rules/*.yaml: every file passes the schema alone but must be rejected by the rules beyond it (recx check --no-repo)"
     requires:
       modules: [schema]
     extract:
       method: copy
+  - id: validator
+    path: src/recx_cli/
+    summary: The recx check command, which validates a RECX.yaml against the schema and the rules beyond it.
+    language: python
+    interface:
+      type: cli
+      entrypoints:
+        - "recx check [PATH] [--no-repo]"
+    requires:
+      packages:
+        - pkg:pypi/jsonschema
+        - pkg:pypi/pyyaml
+      modules: [schema]
+    extract:
+      method: copy
+      notes: Not published yet. The package loads the schema from recx_cli/recx.schema.json, so copy spec/recx.schema.json there.
 evidence:
   - id: schema-is-valid
     summary: The schema is itself a valid JSON Schema 2020-12 document.
@@ -44,3 +61,8 @@ evidence:
     summary: This manifest and the valid examples pass the schema.
     run: uvx check-jsonschema --schemafile spec/recx.schema.json RECX.yaml spec/examples/valid/*.yaml
     covers: [schema, fixtures]
+  - id: validator-tests
+    summary: The validator passes its tests, including every fixture.
+    setup: uv sync
+    run: uv run pytest
+    covers: [validator, schema, fixtures]

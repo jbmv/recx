@@ -1,0 +1,16 @@
+# rule 2: requires.modules must name a module in this manifest
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+modules:
+  - id: core
+    path: src/a.py
+    summary: A module.
+    interface: {type: library, entrypoints: ["f()"]}
+    extract: {method: copy}
+    requires:
+      modules: [missing]

@@ -1,0 +1,23 @@
+{
+  "name": "recx",
+  "version": "0.0.1",
+  "description": "The RECX.yaml manifest format: JSON Schema and example manifests.",
+  "license": "MIT",
+  "author": "James Bullard",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbmv/recx.git"
+  },
+  "main": "./spec/recx.schema.json",
+  "exports": {
+    ".": "./spec/recx.schema.json",
+    "./schema.json": "./spec/recx.schema.json",
+    "./examples/*": "./spec/examples/*"
+  },
+  "files": [
+    "spec/recx.schema.json",
+    "spec/examples/",
+    "README.md",
+    "LICENSE"
+  ]
+}

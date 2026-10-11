@@ -1,0 +1,9 @@
+# rule 6: no mapping repeats a key
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+status: stable
