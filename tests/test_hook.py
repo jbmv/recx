@@ -204,3 +204,16 @@ def test_script_with_outdated_recx_falls_through(tmp_path):
     old.chmod(0o755)
     r = run_script(json.dumps(event(tmp_path)), path=str(bindir))
     assert (r.returncode, r.stdout) == (0, "")
+
+
+def test_script_never_passes_a_failing_status_through(tmp_path):
+    # Claude Code reads exit status 2 from a Stop hook as a block; uv exits 2 on
+    # some failures, so a failing uvx must not become a blocked session.
+    (tmp_path / "RECX.yaml").write_text(INVALID)
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    uvx = bindir / "uvx"
+    uvx.write_text("#!/bin/sh\necho 'error: offline' >&2\nexit 2\n")
+    uvx.chmod(0o755)
+    r = run_script(json.dumps(event(tmp_path)), path=str(bindir))
+    assert (r.returncode, r.stdout) == (0, "")

@@ -66,12 +66,13 @@ def _run() -> None:
     if _mode() == "block" and event.get("stop_hook_active") is not True:
         reason = (
             f"{MANIFEST} is invalid. Fix every problem below, using the {SKILL} skill, "
-            f"then check it with `recx check`:\n{lines}"
+            f"then check it with `recx check` (or `uvx --from recx-cli recx check`):\n{lines}"
         )
         print(json.dumps({"decision": "block", "reason": reason}))
     else:
+        still = " still" if event.get("stop_hook_active") is True else ""
         context = (
-            f"{MANIFEST} is still invalid. The {SKILL} skill explains how to fix it:\n{lines}"
+            f"{MANIFEST} is{still} invalid. The {SKILL} skill explains how to fix it:\n{lines}"
         )
         print(
             json.dumps(
