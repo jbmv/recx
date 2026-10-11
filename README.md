@@ -21,6 +21,6 @@ One line per problem, `<file>: <json-pointer>: <message>`, or `<file>: valid`. E
 means valid, 1 invalid, 2 a usage error or an unreadable file. `recx check` does not yet
 check that the license file agrees with `license` (rule 4 of the spec).
 
-The npm package `recx` ships the schema: `require('recx')` returns it.
+The npm package `@recx/schema` ships the schema: `require('@recx/schema')` returns it.
 
 This README is an interim one. The full README is still to come.
