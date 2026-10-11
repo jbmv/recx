@@ -1,0 +1,44 @@
+recx: "0.1"
+name: argwise
+summary: Declarative command-line argument parsing for Rust, derived from a struct.
+description: |
+  Annotate a struct and argwise generates the parser, the --help text and
+  shell completions. Subcommands are enums. Errors point at the offending
+  argument. It does not read config files or environment variables.
+license: MIT
+status: active
+capabilities:
+  - parse command-line arguments into a typed struct
+  - generate --help and usage text from doc comments
+  - support nested subcommands as enum variants
+  - generate shell completions for bash, zsh and fish
+languages: [rust]
+tags: [cli, argument-parsing, derive, completions]
+modules:
+  - id: derive
+    path: argwise-derive/
+    summary: The derive macro that turns an annotated struct into a parser.
+    language: rust
+    interface:
+      type: library
+      entrypoints:
+        - "#[derive(Args)]"
+        - "Args::parse() -> Self"
+    extract:
+      method: package
+      package: pkg:cargo/argwise
+  - id: complete
+    path: argwise/src/complete/
+    summary: Writes completion scripts for bash, zsh and fish from a parser definition.
+    capabilities:
+      - generate shell completion scripts
+    language: rust
+    interface:
+      type: library
+      entrypoints:
+        - "complete::generate(shell: Shell, out: &mut impl Write)"
+    requires:
+      modules: [derive]
+    extract:
+      method: package
+      package: pkg:cargo/argwise

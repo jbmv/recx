@@ -1,0 +1,28 @@
+recx: "0.1"
+name: quickjson
+summary: A header-only C++17 JSON parser and serializer built for speed.
+description: |
+  quickjson parses JSON into a DOM or streams it through SAX-style callbacks,
+  using SIMD where available. It serializes back with optional pretty
+  printing. It does not validate against JSON Schema.
+license: BSL-1.0
+status: active
+capabilities:
+  - parse JSON documents into a DOM
+  - stream large JSON files with SAX-style callbacks
+  - serialize values back to compact or pretty JSON
+languages: [c++]
+tags: [json, parser, simd, header-only]
+modules:
+  - id: header
+    path: include/quickjson.hpp
+    summary: The whole library in one header.
+    language: c++
+    interface:
+      type: library
+      entrypoints:
+        - "quickjson::parse(std::string_view) -> quickjson::value"
+        - "quickjson::dump(const value&, bool pretty = false) -> std::string"
+    extract:
+      method: copy
+      notes: Copy the single header; needs C++17.

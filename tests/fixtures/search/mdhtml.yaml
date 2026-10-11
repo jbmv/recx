@@ -1,0 +1,40 @@
+recx: "0.1"
+name: mdhtml
+summary: A CommonMark and GitHub Flavored Markdown to HTML converter in Rust.
+description: |
+  mdhtml renders Markdown to HTML, passing the CommonMark spec tests and the
+  GFM extensions (tables, task lists, strikethrough, autolinks). Raw HTML is
+  escaped unless explicitly allowed. A small CLI wraps the library.
+license: MIT
+status: stable
+capabilities:
+  - render CommonMark and GFM markdown to HTML
+  - escape raw HTML in untrusted markdown input
+  - add anchor ids to headings for a table of contents
+languages: [rust]
+tags: [markdown, html, commonmark, gfm]
+modules:
+  - id: core
+    path: src/
+    summary: The parser and HTML renderer.
+    language: rust
+    interface:
+      type: library
+      entrypoints:
+        - "mdhtml::to_html(input: &str, opts: &Options) -> String"
+    extract:
+      method: package
+      package: pkg:cargo/mdhtml
+  - id: cli
+    path: cli/
+    summary: Converts Markdown files to HTML files from the command line.
+    language: rust
+    interface:
+      type: cli
+      entrypoints:
+        - "mdhtml [--unsafe-html] INPUT.md [-o OUTPUT.html]"
+    requires:
+      modules: [core]
+    extract:
+      method: package
+      package: pkg:cargo/mdhtml-cli

@@ -1,0 +1,26 @@
+recx: "0.1"
+name: slack-notify
+summary: A GitHub Action that posts workflow results to a Slack channel.
+description: |
+  Sends a message to Slack through an incoming webhook when a job succeeds,
+  fails or is cancelled, with the commit, author and a link to the run.
+  Messages can be threaded per pull request.
+license: MIT
+status: active
+capabilities:
+  - post a Slack message when a GitHub Actions job fails or succeeds
+  - include commit, author and run link in the notification
+  - thread notifications for the same pull request
+languages: [javascript]
+tags: [github-actions, slack, notifications, ci]
+modules:
+  - id: action
+    path: action.yml
+    summary: The action and its bundled script.
+    language: javascript
+    interface:
+      type: github-action
+      entrypoints:
+        - "uses: relaybot/slack-notify@v2"
+    extract:
+      method: fork

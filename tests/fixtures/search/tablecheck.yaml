@@ -1,0 +1,28 @@
+recx: "0.1"
+name: tablecheck
+summary: Validates CSV files against a column schema and reports bad rows.
+description: |
+  Describe each column's type, required-ness, allowed values and pattern in a
+  small schema file. tablecheck streams the CSV, so large files are fine, and
+  prints each failing row with the rule it broke. It never modifies the data.
+license: MIT
+status: active
+capabilities:
+  - validate CSV files against a column schema
+  - report each invalid row with the failing rule
+  - infer a starting schema from an existing CSV file
+languages: [go]
+tags: [csv, data-validation, schema]
+modules:
+  - id: cli
+    path: cmd/tablecheck/
+    summary: The tablecheck command.
+    language: go
+    interface:
+      type: cli
+      entrypoints:
+        - "tablecheck --schema columns.yaml data.csv"
+        - "tablecheck infer data.csv > columns.yaml"
+    extract:
+      method: package
+      package: pkg:golang/github.com/gridline/tablecheck

@@ -1,0 +1,30 @@
+recx: "0.1"
+name: anomr
+summary: Anomaly detection for seasonal time series in R.
+description: |
+  Decomposes a series into trend and seasonality, then flags points whose
+  residuals are extreme under a generalized ESD test. Works on ts, xts and
+  tsibble objects and plots the anomalies with ggplot2.
+license: MIT
+status: active
+capabilities:
+  - detect anomalies in seasonal time series
+  - decompose a series into trend, seasonal and remainder components
+  - plot detected anomalies over the original series
+languages: [r]
+tags: [time-series, anomaly-detection, statistics]
+modules:
+  - id: pkg
+    path: R/
+    summary: The anomr package functions.
+    language: r
+    interface:
+      type: library
+      entrypoints:
+        - "detect_anomalies(x, period = NULL, alpha = 0.05, max_anoms = 0.1)"
+        - "plot_anomalies(result)"
+    requires:
+      packages: [pkg:cran/ggplot2]
+    extract:
+      method: package
+      package: pkg:cran/anomr

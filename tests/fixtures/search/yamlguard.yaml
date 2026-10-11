@@ -1,0 +1,39 @@
+recx: "0.1"
+name: yamlguard
+summary: A fast YAML linter that catches duplicate keys, bad indentation and truthy surprises.
+description: |
+  yamlguard checks YAML files for problems that parsers accept silently:
+  duplicate keys, the Norway problem (no becoming false), tabs, inconsistent
+  indentation and over-long lines. Rules are configured in .yamlguard.yml.
+  It reports; it does not reformat files.
+license: Apache-2.0
+status: active
+capabilities:
+  - lint YAML files for duplicate keys and inconsistent indentation
+  - flag ambiguous scalars such as no, on and 0755
+  - report problems in GitHub annotation and SARIF formats
+languages: [go]
+tags: [yaml, linter, ci, static-analysis]
+modules:
+  - id: cli
+    path: cmd/yamlguard/
+    summary: The yamlguard command, which lints files and exits non-zero on errors.
+    language: go
+    interface:
+      type: cli
+      entrypoints:
+        - "yamlguard [--config FILE] [--format text|github|sarif] PATH..."
+    extract:
+      method: package
+      package: pkg:golang/github.com/strata-oss/yamlguard
+  - id: rules
+    path: rules/
+    summary: The lint rules as a Go package, usable without the command.
+    language: go
+    interface:
+      type: library
+      entrypoints:
+        - "rules.Check(doc []byte, cfg Config) []Problem"
+    extract:
+      method: copy
+      notes: Depends on gopkg.in/yaml.v3 for the node tree.

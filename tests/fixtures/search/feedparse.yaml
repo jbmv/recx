@@ -1,0 +1,47 @@
+recx: "0.1"
+name: feedparse
+summary: Parses RSS 0.9x, RSS 2.0 and Atom 1.0 feeds into plain Python dataclasses.
+description: |
+  A dependency-light feed parser. It copes with the malformations seen in the
+  wild (bad dates, HTML in titles, missing GUIDs) and normalises every format to
+  one Entry type. It does not fetch or poll feeds; pass it bytes.
+license: BSD-3-Clause
+status: stable
+capabilities:
+  - parse RSS and Atom feeds into a common entry type
+  - normalise feed dates to timezone-aware datetimes
+  - sanitise HTML in feed titles and summaries
+languages: [python]
+tags: [rss, atom, feeds, xml, parser]
+modules:
+  - id: parser
+    path: src/feedparse/parse.py
+    summary: Turns feed XML bytes into a Feed holding a list of Entry records.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "parse(data: bytes) -> Feed"
+    requires:
+      packages: [pkg:pypi/defusedxml]
+    extract:
+      method: package
+      package: pkg:pypi/feedparse
+  - id: dates
+    path: src/feedparse/dates.py
+    summary: Lenient RFC 822 and ISO 8601 date parsing for feed timestamps.
+    capabilities:
+      - parse RFC 822 and ISO 8601 dates leniently
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "parse_date(text: str) -> datetime | None"
+    extract:
+      method: copy
+      notes: Self-contained; uses the standard library only.
+evidence:
+  - id: tests
+    summary: Parses a corpus of 400 real-world feeds without error.
+    run: pytest
+    covers: [parser, dates]

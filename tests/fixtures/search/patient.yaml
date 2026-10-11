@@ -1,0 +1,29 @@
+recx: "0.1"
+name: patient
+summary: Retry async functions with exponential backoff, jitter and a deadline.
+description: |
+  Wrap any promise-returning function and patient retries it when it throws
+  or returns a retryable result. Backoff is exponential with full jitter by
+  default; a Retry-After header on a 429 or 503 response is honoured. Abort
+  signals cancel the wait.
+license: ISC
+status: stable
+capabilities:
+  - retry a failing async operation with exponential backoff and jitter
+  - honour Retry-After headers on 429 and 503 responses
+  - stop retrying at a deadline or on an abort signal
+languages: [typescript]
+tags: [retry, backoff, resilience, fetch]
+modules:
+  - id: retry
+    path: src/retry.ts
+    summary: The retry wrapper and its backoff policies.
+    language: typescript
+    interface:
+      type: library
+      entrypoints:
+        - "retry<T>(fn: () => Promise<T>, opts?: RetryOptions): Promise<T>"
+        - "exponential({ base, factor, max }): Backoff"
+    extract:
+      method: copy
+      notes: One file with no dependencies.

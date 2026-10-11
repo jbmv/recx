@@ -1,0 +1,28 @@
+recx: "0.1"
+name: cronexpr
+summary: Parses cron expressions and computes their next occurrences for .NET.
+description: |
+  Supports the five-field Unix format, an optional seconds field, and
+  Quartz-style L, W and # specifiers. Next and previous occurrences are
+  computed in any time zone, correctly across daylight saving changes.
+license: MIT
+status: stable
+capabilities:
+  - parse cron expressions including seconds and Quartz extensions
+  - compute the next and previous occurrence of a cron schedule
+  - handle daylight saving time transitions in any time zone
+languages: [c#]
+tags: [cron, scheduling, dotnet]
+modules:
+  - id: lib
+    path: src/CronExpr/
+    summary: The CronExpression type.
+    language: c#
+    interface:
+      type: library
+      entrypoints:
+        - "CronExpression.Parse(string expression)"
+        - "expr.GetNextOccurrence(DateTimeOffset from, TimeZoneInfo zone)"
+    extract:
+      method: package
+      package: pkg:nuget/CronExpr

@@ -1,0 +1,200 @@
+# Search quality cases for the v0 matcher (docs/design/search.md, section 3; task 8).
+#
+# `index` maps each fixture in tests/fixtures/search/ to the repository it stands for. The
+# test builds one index entry per fixture with recx_cli.index.project and a plausible source.
+#
+# Each case is a need phrased the way an agent planning work would phrase it. `top5` lists the
+# entries that must rank in the top five; `not_top5` lists entries that must not. Optional
+# `languages`, `interfaces` and `licenses` are passed to rank() as filters. A case the design
+# cannot meet carries `xfail` with the reason; the weights are fixed by the design and were
+# not tuned to these cases.
+
+index:
+  anomr: tsweave/anomr
+  argwise: ferrous-tools/argwise
+  confyaml: nordvik/confyaml
+  cronexpr: dotcron/cronexpr
+  feedparse: quillworks/feedparse
+  feedwatch: streamline/feedwatch
+  kustomize-secrets: harborline/kustomize-secrets
+  mcp-sqlite: tidepool-dev/mcp-sqlite
+  mdhtml: inkstone/mdhtml
+  mdlint: prosekit/mdlint
+  nextver: changeling/nextver
+  patient: kitebase/patient
+  pdfmine: pagecraft/pdfmine
+  pr-labeler: octolabel/pr-labeler
+  quickjson: quarry-cpp/quickjson
+  schemacheck: validata/schemacheck
+  sealbox: lockstep-io/sealbox
+  sitemapgen: parcel-run/sitemapgen
+  slack-notify: relaybot/slack-notify
+  steadyhttp: oakline/steadyhttp
+  tablecheck: gridline/tablecheck
+  thumbsmith: lumenpix/thumbsmith
+  tokencheck: keyring-labs/tokencheck
+  tollgate: meshgate/tollgate
+  yamlguard: strata-oss/yamlguard
+
+cases:
+  # Short queries.
+  - id: rss-atom-short
+    query: parse RSS and Atom feeds
+    top5: [quillworks/feedparse, streamline/feedwatch]
+
+  - id: markdown-to-html
+    query: markdown to html
+    top5: [inkstone/mdhtml]
+
+  - id: yaml-lint
+    query: lint yaml files
+    top5: [strata-oss/yamlguard]
+
+  - id: jwt
+    query: verify JWT
+    top5: [keyring-labs/tokencheck]
+
+  - id: sitemap
+    query: generate a sitemap
+    top5: [parcel-run/sitemapgen]
+
+  - id: cpp-json
+    query: c++ json parser
+    top5: [quarry-cpp/quickjson]
+
+  - id: csharp-cron
+    query: cron expression parser for C#
+    top5: [dotcron/cronexpr]
+
+  # One sentence.
+  - id: argument-parsing-rust
+    query: I need a library for parsing command-line arguments and subcommands in a Rust CLI.
+    top5: [ferrous-tools/argwise]
+
+  - id: mcp-sqlite
+    query: an MCP server that lets the agent run SQL queries against a local SQLite database
+    top5: [tidepool-dev/mcp-sqlite]
+
+  - id: label-prs
+    query: GitHub Action to automatically label pull requests based on which files changed
+    top5: [octolabel/pr-labeler]
+
+  - id: retry-backoff
+    query: retry failed HTTP calls with exponential backoff and jitter
+    top5: [kitebase/patient, oakline/steadyhttp]
+
+  - id: config-yaml-env
+    query: load app configuration from a YAML file with environment variable overrides
+    top5: [nordvik/confyaml]
+    not_top5: [harborline/kustomize-secrets]
+
+  - id: yaml-duplicate-keys-in-ci
+    query: catch duplicate keys and indentation mistakes in our YAML files during CI
+    top5: [strata-oss/yamlguard]
+    not_top5: [nordvik/confyaml]
+    xfail: >-
+      No score threshold, by design. yamlguard is first by a wide margin (about 10.7), and
+      every other candidate shares only weak terms such as "yaml", "file" or "keys" (sealbox's
+      encryption keys). confyaml, a config loader, takes fourth place on "yaml" and "file"
+      alone (about 1.8). The near-miss fills a slot because nothing better exists to fill it.
+
+  - id: rate-limit-api
+    query: rate limit requests to our HTTP API per client, using Redis so it works across replicas
+    top5: [meshgate/tollgate]
+    not_top5: [kitebase/patient]
+
+  - id: pdf-tables
+    query: pull tables out of PDF invoices into rows
+    top5: [pagecraft/pdfmine]
+
+  - id: thumbnails
+    query: resize uploaded images into thumbnails and serve them as WebP
+    top5: [lumenpix/thumbsmith]
+
+  - id: changelog
+    query: compute the next semantic version from conventional commits and update the changelog
+    top5: [changeling/nextver]
+
+  - id: slack-ci
+    query: notify a Slack channel when the CI workflow fails
+    top5: [relaybot/slack-notify]
+    not_top5: [octolabel/pr-labeler]
+
+  - id: time-series-anomalies-r
+    query: flag anomalies in daily seasonal time series, preferably in R
+    top5: [tsweave/anomr]
+
+  - id: csv-validation
+    query: validate incoming CSV uploads against a schema and report the bad rows
+    top5: [gridline/tablecheck]
+    not_top5: [quarry-cpp/quickjson]
+
+  - id: vault-secrets-k8s
+    query: inject secrets from Vault into Kubernetes manifests without committing them
+    top5: [harborline/kustomize-secrets]
+    not_top5: [nordvik/confyaml]
+    xfail: >-
+      No score threshold, by design. Only five entries share a term with the query, so all
+      five are returned; confyaml is fifth on the single term "secret" (from "Secrets can be
+      read from files"), at about a tenth of kustomize-secrets' score.
+
+  - id: markdown-lint
+    query: lint the Markdown in our docs folder and catch broken links
+    top5: [prosekit/mdlint]
+
+  - id: yaml-json-schema
+    query: validate a yaml manifest against a json schema
+    top5: [validata/schemacheck]
+
+  - id: encrypt-config
+    query: keep encrypted secrets in config files we commit to the repository
+    top5: [lockstep-io/sealbox]
+
+  - id: python-http-resilience
+    query: python HTTP client with timeouts and a circuit breaker for a flaky upstream service
+    top5: [oakline/steadyhttp]
+
+  # With filters.
+  - id: parser-python-only
+    query: parser
+    languages: [python]
+    top5: [quillworks/feedparse]
+    not_top5: [quarry-cpp/quickjson, ferrous-tools/argwise]
+
+  - id: feeds-cli-only
+    query: RSS feeds
+    interfaces: [cli]
+    top5: [streamline/feedwatch]
+    not_top5: [quillworks/feedparse]
+
+  # Paraphrase without shared vocabulary.
+  - id: throttle-synonym
+    query: throttle abusive clients hammering our endpoints
+    # Passes, but only just: the one shared term is "client", and tollgate ranks third behind
+    # tokencheck ("endpoint") and steadyhttp ("client"). No synonyms in v0: "throttle" never
+    # reaches "rate limit".
+    top5: [meshgate/tollgate]
+
+  # Paragraphs from proposals.
+  - id: proposal-newsletter
+    query: >-
+      Proposal: a weekly digest service. Every morning it polls a list of RSS and Atom feeds
+      the user subscribes to, removes items it has already sent, and renders the new items into
+      an HTML email. Item summaries arrive as Markdown, so we need a Markdown to HTML step that
+      escapes anything unsafe. Failed sends should be retried with backoff.
+    top5: [streamline/feedwatch, quillworks/feedparse, inkstone/mdhtml]
+
+  - id: proposal-api-gateway
+    query: >-
+      We are building a small API gateway in Go. Each incoming request carries a bearer JWT
+      issued by our OIDC provider; the gateway must verify the signature against the provider's
+      JWKS, check audience and expiry, and reject expired tokens. It should also rate limit each
+      client and return 429 with a Retry-After header when the limit is exceeded.
+    top5: [keyring-labs/tokencheck, meshgate/tollgate]
+
+  - id: proposal-release-bot
+    query: >-
+      Our release process is manual. We want CI to work out the next version number from the
+      commit messages since the last tag, write the CHANGELOG entry, tag the release, and post a
+      message in Slack when it is done.
+    top5: [changeling/nextver, relaybot/slack-notify]

@@ -1,0 +1,30 @@
+recx: "0.1"
+name: mcp-sqlite
+summary: An MCP server that gives an agent read-only SQL access to a SQLite database file.
+description: |
+  Exposes a SQLite file through the Model Context Protocol: tools to list
+  tables, describe a schema and run SELECT queries, with a row limit and a
+  statement timeout. Writes are refused at the connection level.
+license: MIT
+status: active
+capabilities:
+  - expose a SQLite database to an agent over MCP
+  - run read-only SQL queries with a row limit and timeout
+  - describe tables and columns of a database schema
+languages: [typescript]
+tags: [mcp, sqlite, sql, database, agents]
+modules:
+  - id: server
+    path: src/
+    summary: The stdio MCP server with list_tables, describe_table and query tools.
+    language: typescript
+    interface:
+      type: mcp-server
+      entrypoints:
+        - "npx mcp-sqlite --db path/to/file.db"
+        - "tool: query(sql: string, limit?: number)"
+    requires:
+      packages: [pkg:npm/better-sqlite3, pkg:npm/%40modelcontextprotocol/sdk]
+    extract:
+      method: package
+      package: pkg:npm/mcp-sqlite

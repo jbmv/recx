@@ -1,0 +1,29 @@
+recx: "0.1"
+name: schemacheck
+summary: Validates JSON, YAML and TOML documents against JSON Schema from the command line.
+description: |
+  A thin, fast CLI around a JSON Schema 2020-12 validator. Give it a schema
+  file or a URL and one or more documents; it prints each error with the
+  document path and line. Ships a pre-commit hook and a GitHub Action.
+license: Apache-2.0
+status: stable
+capabilities:
+  - validate JSON, YAML and TOML files against a JSON Schema
+  - report validation errors with file, line and JSON pointer
+  - run as a pre-commit hook
+languages: [python]
+tags: [json-schema, validation, yaml, pre-commit]
+modules:
+  - id: cli
+    path: src/schemacheck/
+    summary: The schemacheck command.
+    language: python
+    interface:
+      type: cli
+      entrypoints:
+        - "schemacheck --schema schema.json FILE..."
+    requires:
+      packages: [pkg:pypi/jsonschema, pkg:pypi/ruamel.yaml]
+    extract:
+      method: package
+      package: pkg:pypi/schemacheck

@@ -1,0 +1,28 @@
+recx: "0.1"
+name: thumbsmith
+summary: An HTTP service that resizes and crops images on the fly and caches the results.
+description: |
+  Request /fit/300x200/path/to/image.jpg and thumbsmith fetches the original
+  from S3 or a local directory, resizes it, converts to WebP or AVIF when the
+  client accepts them, and caches the output. URLs can be signed.
+license: Apache-2.0
+status: active
+capabilities:
+  - resize and crop images through URL parameters
+  - convert images to WebP or AVIF by Accept header
+  - sign image URLs to prevent abuse
+languages: [go]
+tags: [images, thumbnails, http, webp]
+modules:
+  - id: server
+    path: cmd/thumbsmith/
+    summary: The HTTP server.
+    language: go
+    interface:
+      type: http-api
+      entrypoints:
+        - "GET /fit/{width}x{height}/{path}"
+        - "GET /crop/{width}x{height}/{path}"
+    extract:
+      method: package
+      package: pkg:docker/thumbsmith/thumbsmith

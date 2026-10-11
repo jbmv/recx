@@ -1,0 +1,29 @@
+recx: "0.1"
+name: tokencheck
+summary: Verifies JWT access tokens against a JWKS endpoint, with key caching and rotation.
+description: |
+  For APIs sitting behind an OAuth 2.0 or OpenID Connect provider. tokencheck
+  fetches the provider's JSON Web Key Set, caches it, refetches on an unknown
+  key id, and checks signature, expiry, audience and issuer.
+license: Apache-2.0
+status: active
+capabilities:
+  - verify JWT signatures with keys from a JWKS URL
+  - check expiry, audience and issuer claims
+  - cache signing keys and refresh them when the key id changes
+languages: [python]
+tags: [jwt, oauth2, oidc, authentication, security]
+modules:
+  - id: verifier
+    path: src/tokencheck/
+    summary: The Verifier class and its key cache.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "Verifier(jwks_url: str, audience: str, issuer: str).verify(token: str) -> Claims"
+    requires:
+      packages: [pkg:pypi/cryptography]
+    extract:
+      method: package
+      package: pkg:pypi/tokencheck

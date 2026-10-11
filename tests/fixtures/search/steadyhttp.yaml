@@ -1,0 +1,30 @@
+recx: "0.1"
+name: steadyhttp
+summary: A resilient Python HTTP client with timeouts, retries and a circuit breaker.
+description: |
+  Wraps httpx with defaults suited to calling flaky upstream services: a
+  connect and read timeout on every request, retries on idempotent methods
+  with exponential backoff, and a per-host circuit breaker that fails fast
+  while an upstream is down.
+license: MIT
+status: active
+capabilities:
+  - retry idempotent HTTP requests with exponential backoff
+  - apply connect and read timeouts to every request
+  - open a circuit breaker per host after repeated failures
+languages: [python]
+tags: [http, retry, circuit-breaker, resilience]
+modules:
+  - id: client
+    path: src/steadyhttp/
+    summary: The Client class and its retry and breaker policies.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "Client(timeout: float = 5.0, retries: int = 3).get(url: str) -> Response"
+    requires:
+      packages: [pkg:pypi/httpx]
+    extract:
+      method: package
+      package: pkg:pypi/steadyhttp

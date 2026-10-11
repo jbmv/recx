@@ -1,0 +1,38 @@
+recx: "0.1"
+name: mdlint
+summary: A Markdown linter that enforces consistent headings, lists and link style.
+description: |
+  mdlint checks Markdown files against configurable style rules: heading
+  levels, list markers, line length, trailing spaces and broken relative
+  links. Most rules can fix files in place. Intended for docs folders in CI.
+license: MIT
+status: active
+capabilities:
+  - lint Markdown files for style and structure problems
+  - fix common Markdown style issues automatically
+  - detect broken relative links between documents
+languages: [javascript]
+tags: [markdown, linter, documentation, ci]
+modules:
+  - id: cli
+    path: bin/mdlint.js
+    summary: The mdlint command for files and globs.
+    language: javascript
+    interface:
+      type: cli
+      entrypoints:
+        - "npx mdlint [--fix] [--config .mdlint.json] 'docs/**/*.md'"
+    extract:
+      method: package
+      package: pkg:npm/mdlint
+  - id: rules
+    path: lib/rules/
+    summary: The rule implementations, each a function over the Markdown syntax tree.
+    language: javascript
+    interface:
+      type: library
+      entrypoints:
+        - "lint(markdown: string, config: Config): Problem[]"
+    extract:
+      method: package
+      package: pkg:npm/mdlint

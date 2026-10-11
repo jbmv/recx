@@ -1,0 +1,42 @@
+recx: "0.1"
+name: pdfmine
+summary: Extracts text, tables and metadata from PDF files.
+description: |
+  pdfmine reads the text layer of a PDF in reading order, detects ruled and
+  unruled tables and returns them as rows, and reads document metadata.
+  Scanned PDFs without a text layer are out of scope; use an OCR tool first.
+license: MIT
+status: active
+capabilities:
+  - extract text from PDF pages in reading order
+  - detect tables in PDF documents and return them as rows
+  - read PDF metadata such as title, author and page count
+languages: [python]
+tags: [pdf, text-extraction, tables, documents]
+modules:
+  - id: text
+    path: src/pdfmine/text.py
+    summary: Text extraction with layout analysis.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "extract_text(path: str, pages: range | None = None) -> str"
+    extract:
+      method: package
+      package: pkg:pypi/pdfmine
+  - id: tables
+    path: src/pdfmine/tables.py
+    summary: Table detection that returns each table as a list of rows.
+    capabilities:
+      - export detected tables to CSV
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "extract_tables(path: str, page: int) -> list[list[list[str]]]"
+    requires:
+      modules: [text]
+    extract:
+      method: package
+      package: pkg:pypi/pdfmine

@@ -1,0 +1,26 @@
+recx: "0.1"
+name: pr-labeler
+summary: A GitHub Action that labels pull requests by the paths they change.
+description: |
+  Map glob patterns to labels in .github/labeler.yml and every pull request
+  gets the matching labels when it opens or updates. Labels that no longer
+  match can optionally be removed. Also sets a size label from the diff.
+license: MIT
+status: stable
+capabilities:
+  - add labels to a pull request based on changed file paths
+  - label pull requests by diff size
+  - remove labels that no longer match after a push
+languages: [typescript]
+tags: [github-actions, pull-requests, labels, automation]
+modules:
+  - id: action
+    path: action.yml
+    summary: The action definition and its compiled entry point.
+    language: typescript
+    interface:
+      type: github-action
+      entrypoints:
+        - "uses: octolabel/pr-labeler@v3"
+    extract:
+      method: fork

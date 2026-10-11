@@ -1,0 +1,28 @@
+recx: "0.1"
+name: sealbox
+summary: Encrypts the values in YAML and JSON config files so secrets can be committed to git.
+description: |
+  sealbox encrypts only the values of a structured file, leaving keys
+  readable so diffs stay reviewable. Keys come from age recipients or a cloud
+  KMS. Decryption happens at deploy time or in an editor wrapper.
+license: MIT
+status: active
+capabilities:
+  - encrypt values in YAML and JSON files while keeping keys readable
+  - decrypt config files at deploy time with age or a cloud KMS
+  - edit an encrypted file in place in your editor
+languages: [go]
+tags: [secrets, encryption, yaml, gitops]
+modules:
+  - id: cli
+    path: cmd/sealbox/
+    summary: The sealbox command with encrypt, decrypt and edit subcommands.
+    language: go
+    interface:
+      type: cli
+      entrypoints:
+        - "sealbox encrypt --age RECIPIENT config.yaml"
+        - "sealbox decrypt config.enc.yaml"
+    extract:
+      method: package
+      package: pkg:golang/github.com/lockstep-io/sealbox

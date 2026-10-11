@@ -1,0 +1,29 @@
+recx: "0.1"
+name: confyaml
+summary: Loads application settings from YAML files and environment variables into typed objects.
+description: |
+  Declare settings as a dataclass; confyaml reads a base YAML file, overlays an
+  environment-specific file and then environment variables, and validates the
+  result against the dataclass types. Secrets can be read from files.
+license: MIT
+status: active
+capabilities:
+  - load configuration from layered YAML files
+  - override settings with environment variables
+  - validate configuration values against dataclass types
+languages: [python]
+tags: [configuration, settings, yaml, environment-variables]
+modules:
+  - id: loader
+    path: src/confyaml/
+    summary: Reads, merges and validates the layered configuration.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "load(cls: type[T], *paths: str, env_prefix: str = '') -> T"
+    requires:
+      packages: [pkg:pypi/pyyaml]
+    extract:
+      method: package
+      package: pkg:pypi/confyaml

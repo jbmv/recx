@@ -1,0 +1,41 @@
+recx: "0.1"
+name: tollgate
+summary: Token-bucket rate limiting middleware for Go HTTP servers.
+description: |
+  tollgate limits requests per key (client IP, API key or any function of the
+  request) with a token bucket held in memory or in Redis. Rejected requests
+  get a 429 with Retry-After and RateLimit headers.
+license: BSD-2-Clause
+status: active
+capabilities:
+  - rate limit HTTP requests per client with a token bucket
+  - share rate limit state across instances through Redis
+  - set RateLimit and Retry-After response headers
+languages: [go]
+tags: [rate-limiting, middleware, http, redis]
+modules:
+  - id: middleware
+    path: middleware.go
+    summary: net/http middleware that applies a limiter to each request.
+    language: go
+    interface:
+      type: library
+      entrypoints:
+        - "tollgate.Middleware(l Limiter, key KeyFunc) func(http.Handler) http.Handler"
+    extract:
+      method: package
+      package: pkg:golang/github.com/meshgate/tollgate
+  - id: redisstore
+    path: redisstore/
+    summary: A Redis-backed bucket store for limits shared between processes.
+    language: go
+    interface:
+      type: library
+      entrypoints:
+        - "redisstore.New(client *redis.Client) Store"
+    requires:
+      packages: [pkg:golang/github.com/redis/go-redis/v9]
+      modules: [middleware]
+    extract:
+      method: package
+      package: pkg:golang/github.com/meshgate/tollgate

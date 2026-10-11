@@ -1,0 +1,27 @@
+recx: "0.1"
+name: sitemapgen
+summary: Generates sitemap.xml and robots.txt for a built static site.
+description: |
+  Point it at the output directory of any static site generator. It walks the
+  HTML files, reads canonical links and noindex tags, and writes a sitemap
+  (split into an index past 50,000 URLs) plus a robots.txt that references it.
+license: MIT
+status: stable
+capabilities:
+  - generate a sitemap.xml from a directory of HTML files
+  - skip pages marked noindex or with a different canonical URL
+  - write robots.txt pointing at the sitemap
+languages: [javascript]
+tags: [seo, sitemap, static-site]
+modules:
+  - id: cli
+    path: bin/sitemapgen.js
+    summary: The command that scans a site directory and writes the sitemap.
+    language: javascript
+    interface:
+      type: cli
+      entrypoints:
+        - "npx sitemapgen dist/ --base-url https://example.com"
+    extract:
+      method: package
+      package: pkg:npm/sitemapgen

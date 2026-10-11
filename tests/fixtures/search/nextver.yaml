@@ -1,0 +1,27 @@
+recx: "0.1"
+name: nextver
+summary: Works out the next semantic version from conventional commits and writes the changelog.
+description: |
+  Reads commits since the last tag, classifies them by Conventional Commits
+  type, decides whether the release is a major, minor or patch bump, and
+  prepends a CHANGELOG.md section. It can create the tag; it never pushes.
+license: Apache-2.0
+status: active
+capabilities:
+  - determine the next semver version from conventional commit messages
+  - generate a changelog section grouped by commit type
+  - create an annotated git tag for the release
+languages: [rust]
+tags: [semver, changelog, release, conventional-commits, git]
+modules:
+  - id: cli
+    path: src/
+    summary: The nextver command.
+    language: rust
+    interface:
+      type: cli
+      entrypoints:
+        - "nextver [--dry-run] [--tag] [--changelog CHANGELOG.md]"
+    extract:
+      method: package
+      package: pkg:cargo/nextver

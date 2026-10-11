@@ -1,0 +1,42 @@
+recx: "0.1"
+name: feedwatch
+summary: Polls RSS and Atom feeds and posts new items to a webhook.
+description: |
+  Small services keep reimplementing "watch a feed, notify on new items".
+  feedwatch does the polling, deduplication and retry once, as a library with
+  a thin CLI on top. Out of scope: rendering items, storing feed history.
+license: Apache-2.0
+status: active
+capabilities:
+  - poll RSS and Atom feeds on a schedule
+  - deduplicate feed items across restarts
+  - deliver new items to a webhook with retries
+languages: [python]
+tags: [rss, atom, webhooks]
+modules:
+  - id: poller
+    path: src/feedwatch/poll.py
+    summary: Fetches each configured feed on its interval, honouring ETag and Last-Modified.
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "Poller(feeds: list[FeedConfig], store: SeenStore)"
+    requires:
+      packages: [pkg:pypi/httpx]
+    extract:
+      method: package
+      package: pkg:pypi/feedwatch
+  - id: cli
+    path: src/feedwatch/cli/
+    summary: Command-line runner that polls feeds and calls a webhook.
+    language: python
+    interface:
+      type: cli
+      entrypoints:
+        - "feedwatch run --config feeds.toml"
+    requires:
+      modules: [poller]
+    extract:
+      method: package
+      package: pkg:pypi/feedwatch
