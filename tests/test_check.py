@@ -265,3 +265,41 @@ def test_bidi_controls_in_echoed_text_are_escaped():
     shown = _clean("evil‮txt.exe⁦x⁩\x1b[31m")
     assert "‮" not in shown and "⁦" not in shown and "\x1b" not in shown
     assert "\\u202e" in shown and "\\x1b" in shown
+
+
+# -- check_text (RECX-14) ---------------------------------------------------
+
+from recx_cli.check import MAX_BYTES, Problem, check_file, check_text  # noqa: E402
+
+
+def test_check_text_is_exposed_and_returns_problems():
+    assert check_text(BASE) == []
+    assert all(isinstance(p, Problem) for p in check_text("recx: 1\n"))
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    sorted(EXAMPLES.rglob("*.yaml")),
+    ids=lambda p: f"{p.parent.name}/{p.name}",
+)
+def test_check_file_matches_check_text_on_every_fixture(fixture):
+    text = fixture.read_bytes().decode("utf-8")
+    assert check_file(fixture, repo=False) == check_text(text)
+
+
+def test_check_file_repo_adds_only_rule_3(tmp_path):
+    text = BASE + "modules:\n  - id: a\n    path: missing.py\n    summary: x\n"
+    p = write(tmp_path, text)
+    plain = check_file(p, repo=False)
+    with_repo = check_file(p, repo=True)
+    assert with_repo[: len(plain)] == plain
+    assert any("(rule 3)" in x.message for x in with_repo[len(plain):])
+
+
+def test_check_text_rejects_over_64_kib_by_utf8_bytes():
+    # 2-byte characters: under the limit by characters, over it by bytes
+    text = "# " + "é" * (MAX_BYTES // 2) + "\n"
+    assert len(text) <= MAX_BYTES < len(text.encode("utf-8"))
+    n = len(text.encode("utf-8"))
+    assert check_text(text) == [Problem("/", f"file is {n} bytes, over the 64 KiB limit (rule 5)")]
+    assert check_text("x" * (MAX_BYTES + 1))[0].message.endswith("over the 64 KiB limit (rule 5)")

@@ -319,15 +319,35 @@ def check_file(path: Path, *, repo: bool = True) -> list[Problem]:
     except UnicodeDecodeError:
         return [Problem(ROOT, "file is not valid UTF-8")]
 
+    problems, data, ok = _check_decoded(text)
+    if repo and ok:
+        skip = {p.pointer for p in problems}
+        problems += path_problems(data, path.resolve().parent, skip)
+    return problems
+
+
+def check_text(text: str) -> list[Problem]:
+    """Rules 1, 2, 5 and 6 and the schema, for manifest text with no file or repository behind it.
+
+    Gives the same problems as `check_file(path, repo=False)` for a file holding
+    the same text. Invalid UTF-8 cannot be a `str`, so that one problem is only
+    reachable through `check_file`.
+    """
+    # surrogatepass: a lone surrogate cannot be UTF-8, but must not crash the size check
+    size = len(text.encode("utf-8", errors="surrogatepass"))
+    if size > MAX_BYTES:
+        return [Problem(ROOT, f"file is {size} bytes, over the 64 KiB limit (rule 5)")]
+    return _check_decoded(text)[0]
+
+
+def _check_decoded(text: str) -> tuple[list[Problem], Any, bool]:
+    """Parse, schema and rules 1-2. The bool is False when parsing failed."""
     try:
         data = parse(text)
     except ManifestError as exc:
         where = f"line {exc.line}: " if exc.line else ""
-        return [Problem(ROOT, f"{where}{_clean(str(exc))}")]
+        return [Problem(ROOT, f"{where}{_clean(str(exc))}")], None, False
 
     problems = schema_problems(data, load_schema())
     problems += rule_problems(data)
-    if repo:
-        skip = {p.pointer for p in problems}
-        problems += path_problems(data, path.resolve().parent, skip)
-    return problems
+    return problems, data, True
