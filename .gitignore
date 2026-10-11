@@ -22,3 +22,6 @@ KYOSEI_ISSUE.md
 CLAUDE.md
 CLAUDE.local.md
 .kyosei
+
+# internal working documents (subagent drafts, raw proposals); local only
+docs/internal/
