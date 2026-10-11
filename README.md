@@ -1,43 +1,75 @@
 # recx
 
-*res extra commercium*: things outside commerce. A repository drops a `RECX.yaml` at its
-root to tell other people's coding agents what it does, which of its modules can be taken on
-their own, how to take them, and which checks anyone can rerun to see that they work.
+*res extra commercium*: things outside commerce.
 
-The format is specified in [spec/SPEC.md](spec/SPEC.md); the schema is
-[spec/recx.schema.json](spec/recx.schema.json).
+A `RECX.yaml` at the root of a repository tells other people's coding agents what the repository
+does, which parts of it they can take on their own, and which checks show those parts work. recx
+is that format, a validator for it, and a Claude Code plugin that keeps the file current.
 
-## Checking a manifest
+## Why
 
-```sh
-pip install recx-cli          # or: uvx --from recx-cli recx check
+More software is being written than anyone can read. A useful MIT-licensed project gets a
+handful of views, and the next person who needs it builds it again.
 
-recx check                    # ./RECX.yaml, including that module paths exist
-recx check path/to/repo       # a directory holding RECX.yaml
-recx check --no-repo FILE     # the file alone, without looking at the repository
+People can't keep up with that volume, but agents can. recx writes for them. Before an agent
+builds something, it can search for manifests, match its plan against what they offer, and
+reuse a module that already exists and passes its checks, recording the reuse in its own
+manifest.
+
+There is no service to run. The fixed filename is the index: on GitHub, search code for
+`path:/(^|\/)recx\.ya?ml$/i`.
+
+## A manifest
+
+```yaml
+recx: "0.1"
+name: tinyfmt
+summary: Formats byte counts as human-readable strings like 1.2 MB.
+license: MIT
+status: stable
+capabilities:
+  - format a byte count as a human-readable size string
 ```
 
-One line per problem, `<file>: <json-pointer>: <message>`, or `<file>: valid`. Exit status 0
-means valid, 1 invalid, 2 a usage error or an unreadable file. `recx check` does not yet
-check that the license file agrees with `license` (rule 4 of the spec).
+Those six keys are the minimum. Most of the value is in the optional parts: modules with
+interfaces and extraction notes, evidence anyone can rerun, and records of what was reused from
+where. [spec/SPEC.md](spec/SPEC.md) defines every field, puts a length limit on every string,
+and sets out how to read a stranger's manifest safely.
 
-## The Claude Code plugin
+Only permissively licensed projects qualify (MIT, Apache-2.0, the BSDs and similar), so
+anything listed can be reused without asking.
 
-The `recx` plugin adds the `/recx:manifest` skill, for writing and maintaining a `RECX.yaml`,
-and a Stop hook that keeps the manifest valid as a session ends.
+## Get started
 
-```
-/plugin marketplace add jbmv/recx
-/plugin install recx@recx
-```
+- **Claude Code:** `/plugin marketplace add jbmv/recx`, then `/plugin install recx@recx`
+  (or, on Claude Code 2.1.275 or later, `/plugin install recx --marketplace jbmv/recx`). Then
+  ask Claude to add a RECX.yaml. A Stop hook keeps the manifest valid; set
+  `RECX_STOP_HOOK=warn` or `off` to soften or disable it.
+- **Any other agent:** paste the prompt in [ADOPT.md](ADOPT.md).
+- **By hand:** start from the example above, then run `uvx --from recx-cli recx check`.
 
-On Claude Code 2.1.275 or later, `/plugin install recx --marketplace jbmv/recx` does both in one
-step. The hook runs `recx hook stop`, from `recx` on your PATH or else through `uvx`; it needs
-recx-cli 0.0.2 or later, and a missing `recx` never blocks a session. `RECX_STOP_HOOK` sets it:
-`block` (the default), `warn` for feedback only, or `off`.
+## What's here
 
-To adopt recx in a repository with any coding agent, see [ADOPT.md](ADOPT.md).
+| | |
+|---|---|
+| [spec/](spec/) | The spec, its JSON Schema, and valid and invalid example manifests |
+| `recx-cli` on PyPI | `recx check`, the validator (`pip install recx-cli`) |
+| `@jbmv/recx` on npm | The schema and examples, for JavaScript tooling |
+| [plugin/](plugin/) | The Claude Code plugin; this repository is its marketplace |
+| [RECX.yaml](RECX.yaml) | recx's own manifest |
 
-The npm package `@jbmv/recx` ships the schema: `require('@jbmv/recx')` returns it.
+## Status
 
-This README is an interim one. The full README is still to come.
+Experimental. The spec is a v0.1 draft and may change before 1.0; every manifest states the
+version it was written against. `recx check` enforces the whole spec except rule 4, that the
+license file matches `license`.
+
+## Kyosei
+
+I built recx for Kyosei, a record-keeping tool for running projects with coding agents. Kyosei
+isn't public yet. It will generate its own RECX.yaml from its records. Nothing in the spec
+depends on Kyosei: it is one client of the spec, like any other tool.
+
+## License
+
+MIT
