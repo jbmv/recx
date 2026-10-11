@@ -1,7 +1,7 @@
 # recx
 
-*res extra commercium*: things outside commerce. A way for agents to find reusable code from
-solo and small-team projects.
+*res extra commercium*: things outside commerce. A way for agents to find reusable, permissively
+licensed code from solo and small-team projects.
 
 A `RECX.yaml` at the root of a repository tells other people's coding agents what the repository
 does, which parts of it they can take on their own, and which checks show those parts work. recx
@@ -15,14 +15,17 @@ the number of new repositories. Evaluating an unfamiliar open-source project als
 writing a similar tool is often the quicker option, and comparable tools get written more than
 once.
 
-recx moves that search and evaluation to the agent doing the work. A manifest describes a
-project's capabilities, its separable modules and their interfaces, and the commands that
-verify them, in a fixed machine-readable form. An agent can compare a planned task with
-published manifests, check the evidence, and reuse a module, recording where it came from in
-the manifest of the project that took it.
+recx moves that search and evaluation to the agent doing the work, in two parts. The first is
+the manifest: a `RECX.yaml` in each participating repository that describes the project's
+capabilities, its separable modules and their interfaces, and the commands that verify them, in
+a fixed machine-readable form. The second is search: a way for an agent, while planning new
+work, to find manifests with relevant modules, check their evidence, and reuse a module rather
+than write it again, recording where it came from in its own project's manifest.
 
-The fixed filename serves as the index, so no hosted service is involved. On GitHub, manifests
-can be found by searching code for `path:/(^|\/)recx\.ya?ml$/i`.
+Taking part is meant to cost a repository little. One prompt produces a complete, valid
+manifest, and the Claude Code plugin checks it whenever a session ends, so it stays valid as
+the code changes. No hosted service is involved, because the fixed filename serves as the index.
+On GitHub, manifests can be found by searching code for `path:/(^|\/)recx\.ya?ml$/i`.
 
 ## A manifest
 
@@ -67,7 +70,8 @@ anything listed can be reused without asking.
 
 Experimental. The spec is a v0.1 draft and may change before 1.0; every manifest states the
 version it was written against. `recx check` enforces the whole spec except rule 4, that the
-license file matches `license`.
+license file matches `license`. The manifest, the validator and the plugin exist; search, the
+second part described above, is not built yet.
 
 ## Kyosei
 
