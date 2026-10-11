@@ -118,7 +118,9 @@ dropped because consumers ignore unknown ones and they are free-form text.
 
 Every kept string is normalised once, at crawl time: Unicode format characters (category `Cf`,
 which includes bidi controls, zero-width characters and the U+E0000 tag block) and control
-characters are replaced with a visible escape such as `\u202e`. This extends what `check.py`'s
+characters other than newline and tab are replaced with a visible escape such as `\u202e`.
+Newline and tab are kept because `description` and `extract.notes` may span lines; the schema
+already forbids newlines in every one-line field. This extends what `check.py`'s
 `_clean` already escapes for terminal output, without its truncation. The schema's length
 limits already bound every string.
 
