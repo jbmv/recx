@@ -1,0 +1,653 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "recx search index",
+  "description": "The index.json file published by the recx crawler (docs/design/search.md, section 1). Versioned by `format`, separately from the manifest spec. The top level is open: a minor version only adds optional fields.",
+  "type": "object",
+  "required": [
+    "format",
+    "generated_at",
+    "generator",
+    "spec_versions",
+    "counts",
+    "entries"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "pattern": "^recx-index/1\\.[0-9]+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "spec_versions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 20
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "entries",
+        "rejected"
+      ],
+      "properties": {
+        "entries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "source",
+        "manifest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "manifest": {
+          "$ref": "#/$defs/manifest"
+        }
+      }
+    },
+    "slug": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "tag": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[a-z0-9][a-z0-9+#.-]{0,39}$"
+    },
+    "line": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\n\\r]*$"
+    },
+    "phrase": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\n\\r]*$"
+    },
+    "command": {
+      "description": "One shell command line, run from the repository root.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^[^\\n\\r]*$"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 300,
+      "pattern": "^https://"
+    },
+    "relpath": {
+      "description": "A path relative to the repository root: no leading slash, no '..' segment, no spaces. A trailing slash names a directory.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._@+/-]+$"
+    },
+    "purl": {
+      "description": "A Package URL (https://github.com/package-url/purl-spec), e.g. pkg:pypi/jsonschema or pkg:npm/%40scope/name@1.2.0.",
+      "type": "string",
+      "maxLength": 200,
+      "pattern": "^pkg:[a-z0-9.+-]+/[^\\s]+$"
+    },
+    "sha": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "license": {
+      "type": "string",
+      "enum": [
+        "0BSD",
+        "Apache-2.0",
+        "BlueOak-1.0.0",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "BSL-1.0",
+        "CC0-1.0",
+        "ISC",
+        "MIT",
+        "MIT-0",
+        "UPL-1.0",
+        "Unlicense",
+        "Zlib"
+      ]
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "summary",
+        "interface",
+        "extract"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Unique within this manifest.",
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "description": "Where the module lives: a file, or a directory with a trailing slash.",
+          "$ref": "#/$defs/relpath"
+        },
+        "summary": {
+          "description": "What the module does, in one sentence.",
+          "$ref": "#/$defs/line"
+        },
+        "capabilities": {
+          "description": "What this module alone can do, when that is narrower than the project's list.",
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/phrase"
+          }
+        },
+        "language": {
+          "$ref": "#/$defs/tag"
+        },
+        "interface": {
+          "description": "How the module is called.",
+          "type": "object",
+          "required": [
+            "type",
+            "entrypoints"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "library",
+                "cli",
+                "http-api",
+                "mcp-server",
+                "github-action",
+                "claude-code-plugin",
+                "agent-skill",
+                "schema",
+                "config",
+                "other"
+              ]
+            },
+            "entrypoints": {
+              "description": "Signatures, commands or endpoints, one per item, as a caller would write them.",
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 30,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300,
+                "pattern": "^[^\\n\\r]*$"
+              }
+            }
+          }
+        },
+        "requires": {
+          "description": "What the module needs besides itself.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "packages": {
+              "description": "Third-party packages, as Package URLs.",
+              "type": "array",
+              "maxItems": 50,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/purl"
+              }
+            },
+            "modules": {
+              "description": "Ids of other modules in this manifest.",
+              "type": "array",
+              "maxItems": 50,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        },
+        "extract": {
+          "description": "How another project takes this module.",
+          "type": "object",
+          "required": [
+            "method"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "description": "copy: copy the path into your project. package: install the published package. fork: the module is not separable; fork the repository.",
+              "type": "string",
+              "enum": [
+                "copy",
+                "package",
+                "fork"
+              ]
+            },
+            "package": {
+              "description": "The published package, when method is package.",
+              "$ref": "#/$defs/purl"
+            },
+            "notes": {
+              "description": "Anything a copier must change or know, such as a config value or an import path to rewrite.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "if": {
+            "properties": {
+              "method": {
+                "const": "package"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "package"
+            ]
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "id",
+        "covers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Unique within this manifest.",
+          "$ref": "#/$defs/id"
+        },
+        "summary": {
+          "description": "What the check checks, in one sentence.",
+          "$ref": "#/$defs/line"
+        },
+        "covers": {
+          "description": "Ids of the modules this check exercises. An empty list means the project as a whole.",
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "last_result": {
+          "description": "The most recent run. Self-reported unless a consumer reruns it; see SPEC.md, Trust.",
+          "type": "object",
+          "required": [
+            "status",
+            "commit",
+            "date",
+            "runner"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "fail"
+              ]
+            },
+            "commit": {
+              "description": "The commit the run checked.",
+              "$ref": "#/$defs/sha"
+            },
+            "date": {
+              "description": "When the run finished, RFC 3339.",
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 40
+            },
+            "runner": {
+              "description": "ci: a CI service ran it; local: someone's own machine did.",
+              "type": "string",
+              "enum": [
+                "ci",
+                "local"
+              ]
+            },
+            "url": {
+              "description": "Where the run's log can be read, such as a CI job page.",
+              "$ref": "#/$defs/url"
+            }
+          }
+        }
+      },
+      "description": "Evidence as projected: setup and run are never indexed."
+    },
+    "reuse": {
+      "type": "object",
+      "required": [
+        "repository"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "description": "The repository the work came from.",
+          "$ref": "#/$defs/url"
+        },
+        "module": {
+          "description": "The id of the module taken, when the source carries a RECX.yaml.",
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "description": "The path taken, in the source repository.",
+          "$ref": "#/$defs/relpath"
+        },
+        "commit": {
+          "description": "The source commit it was taken at.",
+          "$ref": "#/$defs/sha"
+        },
+        "into": {
+          "description": "Where it lives in this repository now.",
+          "$ref": "#/$defs/relpath"
+        }
+      }
+    },
+    "source": {
+      "description": "What the crawler observed from GitHub's API.",
+      "type": "object",
+      "required": [
+        "full_name",
+        "url",
+        "default_branch",
+        "commit",
+        "blob_sha",
+        "manifest_url",
+        "detected_license",
+        "license_check",
+        "declared_repository",
+        "is_fork",
+        "parent",
+        "is_archived",
+        "stars",
+        "repo_created_at",
+        "pushed_at",
+        "found_by",
+        "first_indexed",
+        "last_verified"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "full_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$",
+          "maxLength": 200,
+          "description": "owner/name as GitHub reports it; the entry's identity."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[^\\s]+$",
+          "maxLength": 300
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "manifest_url": {
+          "type": "string",
+          "pattern": "^https://raw\\.githubusercontent\\.com/[^\\s]+$",
+          "maxLength": 400
+        },
+        "detected_license": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "license_check": {
+          "enum": [
+            "match",
+            "mismatch",
+            "undetected"
+          ]
+        },
+        "declared_repository": {
+          "enum": [
+            "absent",
+            "matches",
+            "differs"
+          ]
+        },
+        "is_fork": {
+          "type": "boolean"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$",
+          "description": "null unless is_fork."
+        },
+        "is_archived": {
+          "type": "boolean"
+        },
+        "stars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repo_created_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "pushed_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "found_by": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "code-search",
+              "topic",
+              "seed",
+              "recheck"
+            ]
+          }
+        },
+        "first_indexed": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40
+        }
+      },
+      "if": {
+        "properties": {
+          "is_fork": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parent": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    "manifest": {
+      "description": "The projected manifest: kept fields only; no setup, run or x- keys; strings normalised. Constraints mirror recx.schema.json.",
+      "type": "object",
+      "required": [
+        "recx",
+        "name",
+        "summary",
+        "license",
+        "status",
+        "capabilities"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "recx": {
+          "description": "Spec version this manifest is written against.",
+          "type": "string",
+          "enum": [
+            "0.1"
+          ]
+        },
+        "name": {
+          "description": "The project's name, as its own authors spell it in lowercase.",
+          "$ref": "#/$defs/slug"
+        },
+        "summary": {
+          "description": "What the project does, in one sentence.",
+          "$ref": "#/$defs/line"
+        },
+        "description": {
+          "description": "A short paragraph: the problem it solves, the approach, and what is out of scope.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "license": {
+          "description": "SPDX identifier of the project's license. Only permissive licenses are allowed, so anything listed can be reused without negotiation.",
+          "$ref": "#/$defs/license"
+        },
+        "status": {
+          "description": "How much the authors stand behind it.",
+          "type": "string",
+          "enum": [
+            "experimental",
+            "active",
+            "stable",
+            "maintenance",
+            "archived"
+          ]
+        },
+        "capabilities": {
+          "description": "What the project can do, one verb phrase per item. This is what an agent matches an idea against.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/phrase"
+          }
+        },
+        "languages": {
+          "description": "Programming languages the project is written in, lowercase.",
+          "type": "array",
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/tag"
+          }
+        },
+        "tags": {
+          "description": "Lowercase kebab-case topic tags.",
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/tag"
+          }
+        },
+        "repository": {
+          "description": "Canonical URL of the source repository. Optional: an agent that found this file already knows where it is.",
+          "$ref": "#/$defs/url"
+        },
+        "homepage": {
+          "description": "Project homepage or documentation URL.",
+          "$ref": "#/$defs/url"
+        },
+        "generator": {
+          "description": "The tool that wrote this manifest, with its version, when a tool wrote it.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "modules": {
+          "description": "The reusable pieces of the project, each one something another project could take on its own.",
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/module"
+          }
+        },
+        "evidence": {
+          "description": "Checks anyone can rerun to see whether the project works.",
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "reuses": {
+          "description": "Work from other repositories this project took and built on. Read across many manifests, these entries are the reuse graph.",
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/reuse"
+          }
+        }
+      }
+    }
+  }
+}
