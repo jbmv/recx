@@ -232,10 +232,9 @@ Any other failure ends the run without publishing, so a network error cannot era
    Code search and topic search items carry the repository's `node_id`. Seed and recheck
    candidates are looked up with aliased `repository(owner:, name:)` fields in the same kind of
    batch. One query costs about one point, so even 1,000 candidates stay far inside the
-   1,000-point hourly budget. Reading the blob and the
-   branch's commit in one query makes a mismatch between them unlikely but not impossible, so
-   when the code search blob sha is known and differs from the fetched `oid`, the crawler
-   fetches again on the next run rather than guessing which commit the blob belongs to.
+   1,000-point hourly budget. The GraphQL read is the source of truth: when a code search blob
+   sha differs from the fetched `oid`, code search was stale, and the file is re-read with its
+   text in the same run.
 3. Validate the text with a new `check_text(text) -> list[Problem]` in `check.py`, the body of
    `check_file` without the filesystem. It applies the size limit, UTF-8, the strict loader
    (rule 6), the schema and rules 1, 2 and 5. This is what `recx check --no-repo` runs. Rule 3
