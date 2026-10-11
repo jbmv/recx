@@ -1,0 +1,9 @@
+# invalid: unknown top-level key (extensions must start with x-)
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+website: https://example.com

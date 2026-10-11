@@ -1,0 +1,8 @@
+# invalid: summary must be a single line
+recx: "0.1"
+name: example
+summary: "An example\nproject."
+license: MIT
+status: experimental
+capabilities:
+  - do one thing

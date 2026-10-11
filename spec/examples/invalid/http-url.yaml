@@ -1,0 +1,9 @@
+# invalid: URLs must use https
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+repository: http://github.com/example/example

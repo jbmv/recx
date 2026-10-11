@@ -1,0 +1,14 @@
+# invalid: a module path may not climb out of the repository with ..
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+modules:
+  - id: core
+    path: ../outside/core.py
+    summary: Core logic.
+    interface: {type: library, entrypoints: ["core()"]}
+    extract: {method: copy}

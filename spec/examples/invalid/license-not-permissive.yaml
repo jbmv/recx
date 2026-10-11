@@ -1,0 +1,8 @@
+# invalid: license GPL-3.0-only is not on the permissive allowlist
+recx: "0.1"
+name: example
+summary: An example project.
+license: GPL-3.0-only
+status: experimental
+capabilities:
+  - do one thing

@@ -1,0 +1,8 @@
+# invalid: recx must name a known spec version
+recx: "1.0"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing

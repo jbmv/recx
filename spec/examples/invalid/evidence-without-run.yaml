@@ -1,0 +1,12 @@
+# invalid: an evidence entry must carry a run command anyone can rerun
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+evidence:
+  - id: tests
+    summary: The tests pass, trust me.
+    covers: []

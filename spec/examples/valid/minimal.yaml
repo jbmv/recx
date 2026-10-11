@@ -1,0 +1,8 @@
+# The smallest valid manifest: the six required keys.
+recx: "0.1"
+name: tinyfmt
+summary: Formats byte counts as human-readable strings like 1.2 MB.
+license: MIT
+status: stable
+capabilities:
+  - format a byte count as a human-readable size string

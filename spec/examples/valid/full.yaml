@@ -1,0 +1,72 @@
+# Every key the schema defines, used once. The project is fictional.
+recx: "0.1"
+name: feedwatch
+summary: Polls RSS and Atom feeds and posts new items to a webhook.
+description: |
+  Small services keep reimplementing "watch a feed, notify on new items".
+  feedwatch does the polling, deduplication and retry once, as a library with
+  a thin CLI on top. Out of scope: rendering items, storing feed history.
+license: Apache-2.0
+status: active
+capabilities:
+  - poll RSS and Atom feeds on a schedule
+  - deduplicate feed items across restarts
+  - deliver new items to a webhook with retries
+languages: [python]
+tags: [rss, atom, webhooks]
+repository: https://github.com/example/feedwatch
+homepage: https://example.github.io/feedwatch
+generator: hand-written
+x-feedwatch-maintainer-note: looking for co-maintainers
+modules:
+  - id: parser
+    path: src/feedwatch/parse.py
+    summary: Parses RSS 2.0 and Atom 1.0 documents into one item type.
+    capabilities:
+      - parse RSS 2.0 and Atom 1.0 into a common item record
+    language: python
+    interface:
+      type: library
+      entrypoints:
+        - "parse_feed(xml: bytes) -> list[Item]"
+    requires:
+      packages:
+        - pkg:pypi/defusedxml
+    extract:
+      method: copy
+      notes: Copy parse.py and items.py together; parse.py imports Item from items.py.
+  - id: cli
+    path: src/feedwatch/cli/
+    summary: Command-line runner that polls feeds and calls a webhook.
+    language: python
+    interface:
+      type: cli
+      entrypoints:
+        - "feedwatch run --config feeds.toml"
+    requires:
+      modules: [parser]
+    extract:
+      method: package
+      package: pkg:pypi/feedwatch
+evidence:
+  - id: unit-tests
+    summary: Unit tests for parsing and deduplication.
+    setup: uv sync
+    run: uv run pytest tests/unit
+    covers: [parser]
+    last_result:
+      status: pass
+      commit: 3f2a9c1
+      date: "2026-10-01T14:03:00Z"
+      runner: ci
+      url: https://github.com/example/feedwatch/actions/runs/1
+  - id: smoke
+    run: uv run feedwatch --version
+    covers: []
+reuses:
+  - repository: https://github.com/example/retrylib
+    module: backoff
+    path: src/backoff.py
+    commit: 9b1e7d2
+    into: src/feedwatch/backoff.py
+x-generated-by-hand: true

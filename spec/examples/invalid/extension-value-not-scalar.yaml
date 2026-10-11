@@ -1,0 +1,10 @@
+# invalid: an x- extension value must be a short scalar, not a mapping
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental
+capabilities:
+  - do one thing
+x-notes:
+  long: free text an agent would read

@@ -1,0 +1,6 @@
+# invalid: capabilities is required and must have at least one item
+recx: "0.1"
+name: example
+summary: An example project.
+license: MIT
+status: experimental

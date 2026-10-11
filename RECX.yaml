@@ -1,0 +1,46 @@
+recx: "0.1"
+name: recx
+summary: A manifest format that lets coding agents find and reuse other people's open-source work.
+description: |
+  res extra commercium: things outside commerce. A repository drops RECX.yaml at
+  its root to say what it does, which of its modules can be taken on their own,
+  how to take them, and which checks anyone can rerun to see that they work.
+  GitHub code search on the filename is the index, so there is no service to
+  run. This repository holds the spec, and it is the spec's first adopter.
+license: MIT
+status: experimental
+capabilities:
+  - define a manifest format describing a repository's reusable modules to coding agents
+  - validate a RECX.yaml manifest with any JSON Schema 2020-12 validator
+tags: [agents, manifest, code-reuse, discovery, json-schema]
+modules:
+  - id: schema
+    path: spec/recx.schema.json
+    summary: The JSON Schema that defines a valid RECX.yaml.
+    interface:
+      type: schema
+      entrypoints:
+        - "uvx check-jsonschema --schemafile spec/recx.schema.json RECX.yaml"
+    extract:
+      method: copy
+  - id: fixtures
+    path: spec/examples/
+    summary: Valid and invalid example manifests for testing any recx validator.
+    interface:
+      type: other
+      entrypoints:
+        - "spec/examples/valid/*.yaml: every file must validate"
+        - "spec/examples/invalid/*.yaml: every file must be rejected, for the reason its first-line comment names"
+    requires:
+      modules: [schema]
+    extract:
+      method: copy
+evidence:
+  - id: schema-is-valid
+    summary: The schema is itself a valid JSON Schema 2020-12 document.
+    run: uvx check-jsonschema --check-metaschema spec/recx.schema.json
+    covers: [schema]
+  - id: manifests-validate
+    summary: This manifest and the valid examples pass the schema.
+    run: uvx check-jsonschema --schemafile spec/recx.schema.json RECX.yaml spec/examples/valid/*.yaml
+    covers: [schema, fixtures]
