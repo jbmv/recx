@@ -81,8 +81,9 @@ Every result is written by the repository's author and has been checked only aga
 schema. The output says so in a fixed `notice`, and the JSON lists the author-written paths in
 `untrusted`. The index never contains a manifest's `setup` or `run` commands. Before reusing
 anything, read the repository's licence file and its current `RECX.yaml`, and run its evidence
-only in a sandbox. [docs/design/search.md](docs/design/search.md) describes the index, the
-crawler and the ranking in full.
+only in a sandbox. [docs/integrating.md](docs/integrating.md) explains how to call search from
+another tool, and [docs/design/search.md](docs/design/search.md) describes the index, the crawler
+and the ranking in full.
 
 ## What's here
 
