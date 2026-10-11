@@ -325,10 +325,10 @@ Each entry becomes one document with several fields. A query is scored with BM25
 field-weighted BM25.
 
 - **Tokens.** NFKC normalisation, case folding, split on anything other than `a-z 0-9 + #`
-  (so `c++`, `c#` survive, and `RECX.yaml` becomes `recx`, `yaml`). Drop single-character
-  tokens other than `c` and `r`, and drop a fixed English stopword list of about 50 words. Stem
+  (so `c++`, `c#` survive, and `RECX.yaml` becomes `recx`, `yaml`). Drop tokens made only of
+  `+` and `#`, and single-character tokens other than `c` and `r`, and drop a fixed English stopword list of about 50 words. Stem
   with three ordered suffix rules, each applied only when at least four characters remain:
-  `ies` becomes `y`; then one final `s` (not `ss`), `ing` or `ed` is removed; then a final `e`
+  `ies` or `ied` becomes `y` (so `retried` matches `retry`); then one final `s` (not `ss`), `ing` or `ed` is removed; then a final `e`
   is removed. So `validate`, `validates`, `validated` and `validating` all become `validat`.
   The rules are fixed and tested, so results are reproducible.
 - **Fields and weights.**

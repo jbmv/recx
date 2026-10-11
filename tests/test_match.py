@@ -430,3 +430,12 @@ def test_modules_only_lists_modules_with_a_match():
 def test_match_entry_is_the_given_entry():
     m = rank(INDEX, "sitemap")[0]
     assert m.entry is next(e for e in INDEX if e["source"]["full_name"] == "parcel-run/sitemapgen")
+
+
+def test_ied_stems_like_ies_so_retried_matches_retry():
+    assert terms("retried") == terms("retry") == ["retry"]
+    assert terms("applied") == terms("apply")
+
+
+def test_tokens_of_only_plus_and_hash_are_dropped():
+    assert terms("## Usage ++ c++ c#") == ["usag", "c++", "c#"]

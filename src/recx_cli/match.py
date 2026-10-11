@@ -24,8 +24,8 @@ something open, this module takes the plain reading:
   then `ed`, then a final `s`; a word can end in only one of them.
 - **Formula as written.** `score = Σ idf(t) · tf' / (k1 + tf')`, without the `(k1 + 1)`
   factor some BM25 texts put in the numerator. The factor is a constant and changes no order.
-- **Tokens.** Splitting is exactly as section 3 says, so a run of `+` or `#` of two or more
-  characters (such as `##` in a Markdown heading) is a term like any other.
+- **Tokens.** Splitting is as section 3 says, and a token made only of `+` and `#` (such as
+  `##` from a Markdown heading) is dropped, since it names nothing.
 - **Query cap.** The query is cut to its first 2,000 characters before tokenising.
 - **Limit.** `limit` is capped at 100; a limit below 1 is a `ValueError`.
 - **Filters.** Values are compared case-insensitively. Several values of one filter keep an
@@ -72,7 +72,7 @@ _SPLIT = re.compile(r"[^a-z0-9+#]+")
 
 
 def _stem(token: str) -> str:
-    if token.endswith("ies") and len(token) - 3 >= 4:
+    if token.endswith(("ies", "ied")) and len(token) - 3 >= 4:
         token = token[:-3] + "y"
     if token.endswith("ing"):
         if len(token) - 3 >= 4:
@@ -92,7 +92,11 @@ def _tokens(text: str) -> list[str]:
     folded = unicodedata.normalize("NFKC", text).casefold()
     out = []
     for token in _SPLIT.split(folded):
-        if not token or (len(token) == 1 and token not in ("c", "r")) or token in STOPWORDS:
+        if (
+            not token.strip("+#")
+            or (len(token) == 1 and token not in ("c", "r"))
+            or token in STOPWORDS
+        ):
             continue
         out.append(_stem(token))
     return out
