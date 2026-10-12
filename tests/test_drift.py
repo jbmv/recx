@@ -368,9 +368,17 @@ def test_hooks_json_registers_session_start():
     assert cmd == '"${CLAUDE_PLUGIN_ROOT}"/scripts/session-start-hook.sh'
 
 
-def test_scripts_require_0_0_4():
+def test_scripts_require_0_1_1():
     for script in (START_SCRIPT, STOP_SCRIPT):
-        assert "recx-cli>=0.0.4" in script.read_text()
+        assert "recx-cli>=0.1.1" in script.read_text()
+
+
+def test_stop_script_uses_installed_recx_only_if_it_knows_subagent_stop():
+    assert "grep -q SubagentStop" in STOP_SCRIPT.read_text()
+    out = subprocess.run(
+        [sys.executable, "-m", "recx_cli", "hook", "stop", "--help"], capture_output=True, text=True, check=True
+    ).stdout
+    assert "SubagentStop" in out
 
 
 def sh(script, stdin, env):

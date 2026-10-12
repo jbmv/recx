@@ -65,7 +65,7 @@ modules:
       package: pkg:pypi/recx-cli
   - id: plugin
     path: plugin/
-    summary: The Claude Code plugin, with the recx:manifest skill and a Stop hook that keeps RECX.yaml valid.
+    summary: The Claude Code plugin, with the recx:manifest skill and a Stop and SubagentStop hook that keeps RECX.yaml valid.
     interface:
       type: claude-code-plugin
       entrypoints:
@@ -76,7 +76,7 @@ modules:
       modules: [validator]
     extract:
       method: copy
-      notes: Installing through the marketplace is the intended route; copying plugin/ works but the hook then needs recx-cli 0.0.2 or later.
+      notes: Installing through the marketplace is the intended route; copying plugin/ works but the hook then needs recx-cli 0.1.1 or later.
   - id: action
     path: action.yml
     summary: A composite GitHub Action that runs recx check, and optionally recx evidence, in a repository's CI.

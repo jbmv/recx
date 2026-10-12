@@ -168,8 +168,8 @@ def build_parser() -> argparse.ArgumentParser:
     hook_sub = hook.add_subparsers(dest="hook_command", required=True, parser_class=_Parser)
     hook_sub.add_parser(
         "stop",
-        help="Stop hook: keep the repository's RECX.yaml valid as a session ends",
-        description="Read Claude Code's Stop hook JSON on stdin. Always exits 0. "
+        help="Stop and SubagentStop hook: keep the repository's RECX.yaml valid",
+        description="Read Claude Code's Stop or SubagentStop hook JSON on stdin. Always exits 0. "
         "RECX_STOP_HOOK=block (default) blocks the stop while RECX.yaml is invalid, "
         "warn only gives feedback, off does nothing.",
     )

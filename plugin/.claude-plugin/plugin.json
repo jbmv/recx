@@ -1,6 +1,6 @@
 {
   "name": "recx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Write and maintain a RECX.yaml manifest, and keep it valid as a session ends.",
   "author": {
     "name": "James Bullard"

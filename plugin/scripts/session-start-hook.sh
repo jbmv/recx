@@ -10,6 +10,6 @@
 if command -v recx >/dev/null 2>&1 && recx hook session-start --help >/dev/null 2>&1; then
   recx hook session-start
 elif command -v uvx >/dev/null 2>&1; then
-  uvx --quiet --from 'recx-cli>=0.0.4' recx hook session-start 2>/dev/null
+  uvx --quiet --from 'recx-cli>=0.1.1' recx hook session-start 2>/dev/null
 fi
 exit 0
