@@ -61,8 +61,11 @@ caching, checking `format`, and treating every `manifest` field as untrusted.
   breaking change is published under `/v2/`, and `/v1/` keeps being written for at least one
   recx-cli minor release afterwards.
 - **The package.** recx-cli is below 1.0. A minor release (0.1 to 0.2) may change the Python
-  function signatures, so pin the minor version as shown above. The output format is versioned
-  separately and does not change with a minor release unless `recx_search` changes.
+  function signatures, so pin the minor version as shown above. A patch release (0.1.0 to
+  0.1.1) does not change the signatures of `search` and `show`, the exceptions they raise, or
+  the shape of what they return. Any change to them in a minor release is named in that
+  release's notes. The output format is versioned separately and does not change with a minor
+  release unless `recx_search` changes.
 
 ## What a result contains
 
