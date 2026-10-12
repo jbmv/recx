@@ -1,8 +1,9 @@
-"""`recx hook stop`: Claude Code's Stop hook, keeping a RECX.yaml valid as a session ends.
+"""`recx hook stop`: Claude Code's Stop and SubagentStop hook, keeping a RECX.yaml valid.
 
-The hook must never trap a session on its own failure, so every error path
-exits 0 without output. Only an invalid manifest produces output, and it is
-always JSON on stdout with exit status 0.
+The same entry point serves both events; the event's own `hook_event_name` is
+named back in any `hookSpecificOutput`. The hook must never trap a session on
+its own failure, so every error path exits 0 without output. Output is always
+JSON on stdout with exit status 0.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from recx_cli.check import Unreadable, check_file, format_problem
 
 MANIFEST = "RECX.yaml"
 SKILL = "recx:manifest"
+EVENTS = ("Stop", "SubagentStop")
 
 
 def _mode() -> str:
@@ -55,6 +57,27 @@ def _read_event() -> tuple[dict, Path] | None:
     return event, _manifest_dir(cwd)
 
 
+def _event_name(event: dict) -> str:
+    name = event.get("hook_event_name")
+    return name if name in EVENTS else "Stop"
+
+
+def _internal_agent(event: dict) -> bool:
+    """A SubagentStop from one of Claude Code's own agents (prompt suggestions, /btw).
+
+    Claude Code documents an empty `agent_type` for those when the session runs
+    without --agent. Such an agent did not do the session's work and cannot act on
+    feedback, so neither the check nor the reminder is spent on it.
+    """
+    return _event_name(event) == "SubagentStop" and not event.get("agent_type")
+
+
+def _context(event: dict, text: str) -> str:
+    return json.dumps(
+        {"hookSpecificOutput": {"hookEventName": _event_name(event), "additionalContext": text}}
+    )
+
+
 def _validity(event: dict, top: Path) -> tuple[bool, str | None]:
     """(manifest is valid, output to print). Knows nothing about drift."""
     manifest = top / MANIFEST
@@ -75,9 +98,7 @@ def _validity(event: dict, top: Path) -> tuple[bool, str | None]:
         return False, json.dumps({"decision": "block", "reason": reason})
     still = " still" if event.get("stop_hook_active") is True else ""
     context = f"{MANIFEST} is{still} invalid. The {SKILL} skill explains how to fix it:\n{lines}"
-    return False, json.dumps(
-        {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": context}}
-    )
+    return False, _context(event, context)
 
 
 def _drift(event: dict, top: Path) -> str | None:
@@ -88,7 +109,7 @@ def _drift(event: dict, top: Path) -> str | None:
         return None
     if text is None:
         return None
-    return json.dumps({"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": text}})
+    return _context(event, text)
 
 
 def _run() -> None:
@@ -98,6 +119,8 @@ def _run() -> None:
     if parsed is None:
         return
     event, top = parsed
+    if _internal_agent(event):
+        return
     valid, output = _validity(event, top)
     if output is not None:
         print(output)

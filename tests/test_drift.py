@@ -422,3 +422,409 @@ def test_session_start_prunes_old_state_files(capsys, monkeypatch, tmp_path, rep
     start(capsys, monkeypatch, repo)
     assert not old.exists()
     assert recent.exists() and state_file(tmp_path).exists()
+
+
+# -- RECX-24: the Recx-Checked trailer -------------------------------------
+
+
+def commit(repo, message, *paths):
+    git(repo, "add", "-A", *paths)
+    git(repo, "commit", "-q", "--allow-empty", "-m", message)
+    return git(repo, "rev-parse", "HEAD").strip()
+
+
+def edit_tool(repo, text="print(2)\n"):
+    (repo / "tool.py").write_text(text)
+
+
+def reminded(out):
+    """The module ids a reminder names, or None for no output."""
+    if out == "":
+        return None
+    data = json.loads(out)
+    assert "decision" not in data
+    text = data["hookSpecificOutput"]["additionalContext"]
+    return text.split("did not: ")[1].split(". ")[0].split(", ")
+
+
+@pytest.mark.parametrize(
+    "trailers, ids",
+    [
+        ("Recx-Checked: lib, tool", {"lib", "tool"}),
+        ("recx-checked: lib tool", {"lib", "tool"}),
+        ("RECX-CHECKED:lib,,\ttool ,", {"lib", "tool"}),
+        ("Recx-Checked: lib\nSigned-off-by: t\nrecx-Checked: tool", {"lib", "tool"}),
+        ("Recx-Checked:", set()),
+        ("Recx-Checked: , ,", set()),
+        ("Recx-Checked lib", set()),
+        ("Not-Recx-Checked: lib", set()),
+        ("", set()),
+    ],
+)
+def test_checked_ids_parsing(trailers, ids):
+    assert drift.checked_ids(trailers) == ids
+
+
+def test_trailer_covers_its_own_commit(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+@pytest.mark.parametrize(
+    "trailers",
+    [
+        "Recx-Checked: lib, tool",
+        "recx-checked: lib tool",
+        "RECX-CHECKED: lib\nRecx-Checked: tool",
+        "Recx-Checked: tool,lib",
+    ],
+)
+def test_trailer_key_case_repetition_and_separators(capsys, monkeypatch, repo, trailers):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    edit_tool(repo)
+    commit(repo, f"change both\n\n{trailers}")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_trailer_covers_only_the_modules_it_names(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    edit_tool(repo)
+    commit(repo, "change both\n\nRecx-Checked: lib")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["tool"]
+
+
+def test_trailer_covers_earlier_commits_in_range(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib")
+    (repo / "src" / "lib" / "b.py").write_text("b = 1\n")
+    commit(repo, "more lib")
+    commit(repo, "checked\n\nRecx-Checked: lib")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_trailer_does_not_cover_later_commits(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+    (repo / "src" / "lib" / "a.py").write_text("a = 3\n")
+    commit(repo, "change lib again")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_trailer_does_not_cover_uncommitted_changes(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+    (repo / "src" / "lib" / "new.py").write_text("n = 1\n")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_unknown_id_in_trailer_is_ignored(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: nosuch")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_unknown_id_beside_a_known_one(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: nosuch, lib")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_trailer_must_be_in_the_trailer_block(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib\n\nA closing paragraph of prose.")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_committed_manifest_change_still_suppresses(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib")
+    (repo / "RECX.yaml").write_text(MANIFEST + "tags: [x]\n")
+    commit(repo, "touch manifest")
+    edit_tool(repo)
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_merged_branch_with_trailer_is_covered(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    git(repo, "checkout", "-qb", "worker")
+    edit_lib(repo)
+    commit(repo, "worker changes lib")
+    commit(repo, "worker checked\n\nRecx-Checked: lib")
+    git(repo, "checkout", "-q", "-")
+    git(repo, "merge", "-q", "--no-ff", "--no-edit", "worker")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_merge_does_not_cover_other_side(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    git(repo, "checkout", "-qb", "worker")
+    edit_lib(repo)
+    commit(repo, "worker changes lib\n\nRecx-Checked: lib")
+    git(repo, "checkout", "-q", "-")
+    (repo / "src" / "lib" / "other.py").write_text("o = 1\n")
+    commit(repo, "main changes lib, unchecked")
+    git(repo, "merge", "-q", "--no-ff", "--no-edit", "worker")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_range_commits_reads_parents_trailers_and_files(repo):
+    base = git(repo, "rev-parse", "HEAD").strip()
+    edit_lib(repo)
+    first = commit(repo, "one\n\nRecx-Checked: lib")
+    git(repo, "mv", "tool.py", "tool2.py")
+    second = commit(repo, "rename")
+    commits = drift.range_commits(repo, base)
+    assert [c.sha for c in commits] == [second, first]
+    assert commits[0].parents == [first] and commits[1].parents == [base]
+    assert commits[1].checked == {"lib"} and commits[0].checked == set()
+    assert commits[1].files == {"src/lib/a.py"}
+    assert commits[0].files == {"tool.py", "tool2.py"}
+
+
+# -- RECX-24.c3: no recorded HEAD, and commits outside the range -----------
+
+
+def test_without_recorded_head_trailers_change_nothing(capsys, monkeypatch, repo):
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+    (repo / "src" / "lib" / "a.py").write_text("a = 5\n")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_trailer_before_the_session_has_no_effect(capsys, monkeypatch, repo):
+    commit(repo, "checked earlier\n\nRecx-Checked: lib")
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+# -- RECX-24.c4/c5: SubagentStop -------------------------------------------
+
+
+def sub_stop(capsys, monkeypatch, repo, **kw):
+    kw.setdefault("agent_type", "general-purpose")
+    kw.setdefault("agent_id", "a1")
+    return stop(capsys, monkeypatch, repo, hook_event_name="SubagentStop", **kw)
+
+
+def context_of(out, event):
+    data = json.loads(out)
+    assert "decision" not in data
+    assert data["hookSpecificOutput"]["hookEventName"] == event
+    return data["hookSpecificOutput"]["additionalContext"]
+
+
+def test_subagent_stop_reminder_names_its_event(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    code, out = sub_stop(capsys, monkeypatch, repo)
+    assert code == 0 and "lib" in context_of(out, "SubagentStop")
+
+
+@pytest.mark.parametrize("name, expected", [("Stop", "Stop"), (None, "Stop"), ("PostToolUse", "Stop")])
+def test_stop_event_name_is_stop(capsys, monkeypatch, repo, name, expected):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    kw = {} if name is None else {"hook_event_name": name}
+    assert "lib" in context_of(stop(capsys, monkeypatch, repo, **kw)[1], expected)
+
+
+def test_once_per_set_across_subagent_stop_and_stop(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    assert "lib" in context_of(sub_stop(capsys, monkeypatch, repo)[1], "SubagentStop")
+    assert stop(capsys, monkeypatch, repo) == (0, "")
+    assert sub_stop(capsys, monkeypatch, repo, agent_id="a2") == (0, "")
+    edit_tool(repo)
+    text = context_of(stop(capsys, monkeypatch, repo, hook_event_name="Stop")[1], "Stop")
+    assert "lib" in text and "tool" in text
+    assert sub_stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_once_per_set_from_stop_to_subagent_stop(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+    assert sub_stop(capsys, monkeypatch, repo) == (0, "")
+
+
+def test_subagent_stop_blocks_on_invalid_manifest(capsys, monkeypatch, repo):
+    (repo / "RECX.yaml").write_text(INVALID)
+    data = json.loads(sub_stop(capsys, monkeypatch, repo)[1])
+    assert data["decision"] == "block" and "recx:manifest" in data["reason"]
+
+
+@pytest.mark.parametrize("how", ["warn", "active"])
+def test_subagent_stop_feedback_without_block(capsys, monkeypatch, repo, how):
+    edit_lib(repo)
+    (repo / "RECX.yaml").write_text(INVALID)
+    kw = {}
+    if how == "warn":
+        monkeypatch.setenv("RECX_STOP_HOOK", "warn")
+    else:
+        kw["stop_hook_active"] = True
+    code, out = sub_stop(capsys, monkeypatch, repo, **kw)
+    assert code == 0 and len(out.strip().splitlines()) == 1
+    text = context_of(out, "SubagentStop")
+    assert "invalid" in text and "Reminder" not in text
+
+
+def test_subagent_stop_off(capsys, monkeypatch, repo):
+    edit_lib(repo)
+    (repo / "RECX.yaml").write_text(INVALID)
+    monkeypatch.setenv("RECX_STOP_HOOK", "off")
+    assert sub_stop(capsys, monkeypatch, repo) == (0, "")
+
+
+@pytest.mark.parametrize("agent_type", ["", None])
+def test_internal_agent_subagent_stop_is_skipped(capsys, monkeypatch, repo, agent_type):
+    # Claude Code fires SubagentStop for its own agents (prompt suggestions, /btw)
+    # with an empty agent_type; they neither get the check nor spend the reminder.
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    kw = {"hook_event_name": "SubagentStop"}
+    if agent_type is not None:
+        kw["agent_type"] = agent_type
+    assert stop(capsys, monkeypatch, repo, **kw) == (0, "")
+    (repo / "RECX.yaml").write_text(INVALID)
+    assert stop(capsys, monkeypatch, repo, **kw) == (0, "")
+    (repo / "RECX.yaml").write_text(MANIFEST)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_subagent_in_another_worktree(capsys, monkeypatch, repo, tmp_path):
+    # The session recorded HEAD in the main checkout; a subagent stops in a linked
+    # worktree, which shares the object store, so the same range is readable there.
+    start(capsys, monkeypatch, repo)
+    wt = tmp_path / "wt"
+    git(repo, "worktree", "add", "-q", "-b", "worker", str(wt))
+    edit_tool(repo, "print('parent edit')\n")
+    (wt / "src" / "lib" / "a.py").write_text("a = 7\n")
+    commit(wt, "worker changes lib\n\nRecx-Checked: lib")
+    assert sub_stop(capsys, monkeypatch, wt) == (0, "")
+    (wt / "src" / "lib" / "a.py").write_text("a = 8\n")
+    commit(wt, "worker changes lib again")
+    assert reminded(sub_stop(capsys, monkeypatch, wt)[1]) == ["lib"]
+    assert sub_stop(capsys, monkeypatch, wt) == (0, "")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["tool"]
+
+
+def test_subagent_in_unrelated_repository_sees_uncommitted_only(capsys, monkeypatch, repo, tmp_path):
+    start(capsys, monkeypatch, repo)
+    other = tmp_path / "other"
+    (other / "src" / "lib").mkdir(parents=True)
+    (other / "src" / "lib" / "a.py").write_text("a = 1\n")
+    (other / "tool.py").write_text("print(1)\n")
+    (other / "RECX.yaml").write_text(MANIFEST)
+    subprocess.run(["git", "init", "-q", str(other)], check=True)
+    commit(other, "a different first commit")
+    (other / "src" / "lib" / "a.py").write_text("a = 2\n")
+    commit(other, "committed lib change, outside the recorded range")
+    assert sub_stop(capsys, monkeypatch, other) == (0, "")
+    edit_tool(other)
+    assert reminded(sub_stop(capsys, monkeypatch, other)[1]) == ["tool"]
+
+
+def test_hooks_json_registers_subagent_stop():
+    data = json.loads((ROOT / "plugin" / "hooks" / "hooks.json").read_text())
+    for event in ("Stop", "SubagentStop"):
+        entry = data["hooks"][event][0]
+        assert entry["hooks"][0]["command"] == '"${CLAUDE_PLUGIN_ROOT}"/scripts/stop-hook.sh'
+        assert "matcher" not in entry
+
+
+# -- RECX-24.c6: failures reading commits or trailers ----------------------
+
+
+def test_failing_range_read_falls_back_and_keeps_validity(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+
+    def boom(*a, **k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(drift, "range_commits", boom)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+    (repo / "RECX.yaml").write_text(INVALID)
+    assert json.loads(stop(capsys, monkeypatch, repo)[1])["decision"] == "block"
+
+
+def test_failing_git_log_falls_back(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, "change lib\n\nRecx-Checked: lib")
+    real = drift._git
+
+    def no_log(top, *args):
+        if args and args[0] == "log":
+            raise subprocess.CalledProcessError(128, "git log")
+        return real(top, *args)
+
+    monkeypatch.setattr(drift, "_git", no_log)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_shallow_history_never_blocks(capsys, monkeypatch, repo, tmp_path):
+    first = git(repo, "rev-parse", "HEAD").strip()
+    edit_lib(repo)
+    commit(repo, "second")
+    shallow = tmp_path / "shallow"
+    subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", f"file://{repo}", str(shallow)], check=True, capture_output=True
+    )
+    state_file(tmp_path).parent.mkdir(parents=True, exist_ok=True)
+    state_file(tmp_path).write_text(json.dumps({"head": first, "reminded": []}))
+    assert stop(capsys, monkeypatch, shallow) == (0, "")
+    (shallow / "tool.py").write_text("print(5)\n")
+    assert reminded(stop(capsys, monkeypatch, shallow)[1]) == ["tool"]
+    (shallow / "RECX.yaml").write_text(INVALID)
+    assert json.loads(stop(capsys, monkeypatch, shallow)[1])["decision"] == "block"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "x\n\nRecx-Checked:",
+        "x\n\nRecx-Checked: ,,,",
+        "x\n\nRecx-Checked: éè \x1e\x1f lib-ish",
+        "x\n\nRecx-Checked: " + "a" * 5000,
+    ],
+)
+def test_malformed_trailer_neither_raises_nor_covers(capsys, monkeypatch, repo, message):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    commit(repo, message)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_scripts_end_to_end_subagent_stop(repo, tmp_path):
+    recx_dir = Path(sys.executable).parent
+    env = {k: v for k, v in os.environ.items() if k not in ("VIRTUAL_ENV", "RECX_STOP_HOOK", "RECX_DRIFT_REMINDER")}
+    env["PATH"] = f"{recx_dir}{os.pathsep}{env['PATH']}"
+    env["CLAUDE_PLUGIN_DATA"] = str(tmp_path / "data")
+    env.update(GIT_ENV)
+    base = {"session_id": "e2e", "cwd": str(repo), "stop_hook_active": False}
+    assert sh(START_SCRIPT, json.dumps({**base, "hook_event_name": "SessionStart"}), env).stdout == ""
+    edit_lib(repo)
+    git(repo, "commit", "-qam", "change lib\n\nRecx-Checked: lib")
+    sub = {**base, "hook_event_name": "SubagentStop", "agent_id": "a1", "agent_type": "general-purpose"}
+    assert sh(STOP_SCRIPT, json.dumps(sub), env).stdout == ""
+    (repo / "tool.py").write_text("print(9)\n")
+    r = sh(STOP_SCRIPT, json.dumps(sub), env)
+    assert r.returncode == 0, r.stderr
+    assert "tool" in context_of(r.stdout, "SubagentStop")
+    assert sh(STOP_SCRIPT, json.dumps({**base, "hook_event_name": "Stop"}), env).stdout == ""

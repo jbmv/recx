@@ -1,9 +1,13 @@
 """Drift reminder: a manifest can be valid and stale.
 
 `recx hook session-start` records the repository's HEAD for the session.
-`recx hook stop` then asks which modules have changed files since, and, when
-RECX.yaml is not among them, reminds once per set of modules. The reminder is
-only ever feedback, never a block. Callers swallow every exception raised here.
+`recx hook stop` (run on Stop and on SubagentStop) then asks which modules have
+changed files since, and, when RECX.yaml is not among them, reminds once per set
+of modules. A commit whose message carries the trailer
+`Recx-Checked: <module-id>[, <module-id>...]` records that those modules' entries
+were checked against the tree at that commit, so its changes to them, and those
+of its ancestors in the session's range, do not count. The reminder is only ever
+feedback, never a block. Callers swallow every exception raised here.
 """
 
 from __future__ import annotations
@@ -120,7 +124,20 @@ def session_start(session_id: str, top: Path) -> None:
         write_state(session_id, {"head": head, "reminded": []})
 
 
+_TRAILER_LINE = re.compile(r"\s*recx-checked\s*:(.*)", re.IGNORECASE)
+_ID_SEP = re.compile(r"[,\s]+")
+
+
+def _uncommitted(top: Path) -> set[str]:
+    """Files changed against HEAD in the index or working tree, plus untracked files."""
+    files = set(_git(top, "diff", "--name-only", "-z", "HEAD", "--").split("\0"))
+    files.update(_git(top, "ls-files", "--others", "--exclude-standard", "-z").split("\0"))
+    files.discard("")
+    return files
+
+
 def changed_files(top: Path, head: str | None) -> set[str]:
+    """The net change since head (or HEAD) plus untracked files: the reading without trailers."""
     files: set[str] = set()
     for base in [head, "HEAD"] if head else ["HEAD"]:
         try:
@@ -133,23 +150,124 @@ def changed_files(top: Path, head: str | None) -> set[str]:
     return files
 
 
-def affected_modules(manifest: Path, files: set[str]) -> list[str]:
+def checked_ids(trailers: str) -> set[str]:
+    """Module ids named by Recx-Checked trailers; anything malformed names nothing."""
+    ids: set[str] = set()
+    for line in trailers.splitlines():
+        m = _TRAILER_LINE.fullmatch(line)
+        if m:
+            ids.update(i for i in _ID_SEP.split(m.group(1)) if i)
+    return ids
+
+
+class Commit:
+    __slots__ = ("sha", "parents", "checked", "files")
+
+    def __init__(self, sha: str, parents: list[str], checked: set[str], files: set[str]) -> None:
+        self.sha, self.parents, self.checked, self.files = sha, parents, checked, files
+
+
+def range_commits(top: Path, head: str) -> list[Commit]:
+    """Every commit in head..HEAD with its parents, Recx-Checked ids and touched files.
+
+    Two `git log` calls: one for the graph and the files, which holds no free text,
+    and one for the trailers, NUL-separated, since a commit message cannot hold a
+    NUL. Merge commits list no files of their own; the commits they bring in are in
+    the range themselves. Raises when git fails (unknown head, shallow history, no
+    git); a record that does not parse is skipped.
+    """
+    rng = f"{head}..HEAD"
+    graph = _git(
+        top, "log", "-z", "--no-renames", "--no-ext-diff", "--format=%x1e%H %P%x1f", "--name-only", rng, "--"
+    )
+    trailers = _git(top, "log", "-z", "--format=%H%n%(trailers:only,unfold)", rng, "--")
+    checked: dict[str, set[str]] = {}
+    for record in trailers.split("\0"):
+        sha, _, text = record.partition("\n")
+        if _HEAD.fullmatch(sha):
+            checked[sha] = checked_ids(text)
+    commits: list[Commit] = []
+    for record in graph.split("\x1e"):
+        header, sep, rest = record.partition("\x1f")
+        shas = header.split()
+        if not sep or not shas or not all(_HEAD.fullmatch(x) for x in shas):
+            continue
+        rest = rest.lstrip("\0")
+        if rest.startswith("\n"):
+            rest = rest[1:]
+        files = {f for f in rest.split("\0") if f}
+        commits.append(Commit(shas[0], shas[1:], checked.get(shas[0], set()), files))
+    return commits
+
+
+def _covered(commits: list[Commit], module_id: str) -> set[str]:
+    """Commits in the range that a Recx-Checked trailer naming module_id vouches for.
+
+    A check vouches for the tree it was made on, so a checking commit covers itself
+    and every ancestor of it within the range. Every path from a commit in the range
+    to an ancestor in the range stays inside the range, so walking parents that are
+    in the range finds exactly those ancestors.
+    """
+    by_sha = {c.sha: c for c in commits}
+    covered: set[str] = set()
+    stack = [c.sha for c in commits if module_id in c.checked]
+    while stack:
+        sha = stack.pop()
+        if sha in covered:
+            continue
+        covered.add(sha)
+        stack.extend(p for p in by_sha[sha].parents if p in by_sha and p not in covered)
+    return covered
+
+
+def _modules(manifest: Path) -> list[tuple[str, str]]:
     data = parse(manifest.read_text(encoding="utf-8"))
     modules = data.get("modules") if isinstance(data, dict) else None
-    found: list[str] = []
+    found: list[tuple[str, str]] = []
     for mod in modules if isinstance(modules, list) else []:
         if not isinstance(mod, dict):
             continue
         mid, path = mod.get("id"), mod.get("path")
-        if not isinstance(mid, str) or not isinstance(path, str):
+        if isinstance(mid, str) and isinstance(path, str):
+            found.append((mid, path))
+    return found
+
+
+def _touches(path: str, files: set[str]) -> bool:
+    if path.endswith("/"):
+        return any(f.startswith(path) for f in files)
+    return path in files
+
+
+def affected_modules(manifest: Path, files: set[str], commits: list[Commit] | None = None) -> list[str]:
+    """Modules whose path is touched by files, or by a commit no trailer for them covers."""
+    found: list[str] = []
+    for mid, path in _modules(manifest):
+        if mid in found:
             continue
-        if path.endswith("/"):
-            hit = any(f.startswith(path) for f in files)
-        else:
-            hit = path in files
-        if hit and mid not in found:
+        hit = _touches(path, files)
+        if not hit and commits:
+            covered = _covered(commits, mid)
+            hit = any(c.sha not in covered and _touches(path, c.files) for c in commits)
+        if hit:
             found.append(mid)
     return found
+
+
+def _changes(top: Path, head: str | None) -> tuple[set[str], list[Commit] | None]:
+    """(files changed outside any commit's trailer, the session's commits).
+
+    With a recorded head whose range git can read, the files are the uncommitted
+    and untracked ones and the commits are read one by one. Otherwise (no head,
+    or any failure reading the range) this is the reading without trailers: the
+    net change since head, or the uncommitted change alone, with no commits.
+    """
+    if head:
+        try:
+            return _uncommitted(top), range_commits(top, head)
+        except Exception:  # noqa: BLE001 - reading commits or trailers never costs the reminder
+            pass
+    return changed_files(top, head), None
 
 
 def reminder(session_id: str | None, top: Path) -> str | None:
@@ -157,10 +275,10 @@ def reminder(session_id: str | None, top: Path) -> str | None:
     if not enabled():
         return None
     state = read_state(session_id) if session_id else {}
-    files = changed_files(top, state.get("head"))
-    if MANIFEST in files:
+    files, commits = _changes(top, state.get("head"))
+    if MANIFEST in files or any(MANIFEST in c.files for c in commits or []):
         return None
-    affected = affected_modules(top / MANIFEST, files)
+    affected = affected_modules(top / MANIFEST, files, commits)
     already = set(state.get("reminded", []))
     if not affected or set(affected) <= already:
         return None
