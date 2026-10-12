@@ -62,6 +62,13 @@ def read_state(session_id: str) -> dict:
         reminded = data.get("reminded")
         if isinstance(reminded, list):
             state["reminded"] = [m for m in reminded if isinstance(m, str)]
+        agents = data.get("agents")
+        if isinstance(agents, dict):
+            state["agents"] = {
+                a: [m for m in r if isinstance(m, str)]
+                for a, r in agents.items()
+                if isinstance(a, str) and _SAFE_ID.fullmatch(a) and isinstance(r, list)
+            }
         return state
     except Exception:  # noqa: BLE001 - a bad state file is ignored
         return {}
@@ -270,8 +277,12 @@ def _changes(top: Path, head: str | None) -> tuple[set[str], list[Commit] | None
     return changed_files(top, head), None
 
 
-def reminder(session_id: str | None, top: Path) -> str | None:
-    """The reminder text to emit now, or None. Records what it reminded about."""
+def reminder(session_id: str | None, top: Path, agent_id: str | None = None) -> str | None:
+    """The reminder text to emit now, or None. Records what it reminded about.
+
+    The session and each subagent (by agent_id) keep their own record of what they
+    were reminded about, so a subagent that is reminded never silences the session.
+    """
     if not enabled():
         return None
     state = read_state(session_id) if session_id else {}
@@ -279,12 +290,17 @@ def reminder(session_id: str | None, top: Path) -> str | None:
     if MANIFEST in files or any(MANIFEST in c.files for c in commits or []):
         return None
     affected = affected_modules(top / MANIFEST, files, commits)
-    already = set(state.get("reminded", []))
+    if agent_id is not None and not _SAFE_ID.fullmatch(agent_id):
+        agent_id = None
+    agents = state.get("agents", {})
+    already = set(agents.get(agent_id, []) if agent_id else state.get("reminded", []))
     if not affected or set(affected) <= already:
         return None
     if session_id:
+        seen = sorted(already | set(affected))
+        update = {"agents": {**agents, agent_id: seen}} if agent_id else {"reminded": seen}
         try:
-            write_state(session_id, {**state, "reminded": sorted(already | set(affected))})
+            write_state(session_id, {**state, **update})
         except Exception:  # noqa: BLE001 - failing to record must not lose the reminder
             pass
     names = ", ".join(affected)

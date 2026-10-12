@@ -104,7 +104,12 @@ def _validity(event: dict, top: Path) -> tuple[bool, str | None]:
 def _drift(event: dict, top: Path) -> str | None:
     try:
         session = event.get("session_id")
-        text = drift.reminder(session if isinstance(session, str) else None, top)
+        agent = event.get("agent_id") if _event_name(event) == "SubagentStop" else None
+        text = drift.reminder(
+            session if isinstance(session, str) else None,
+            top,
+            agent if isinstance(agent, str) else None,
+        )
     except BaseException:  # noqa: BLE001 - the drift path must never block or raise
         return None
     if text is None:

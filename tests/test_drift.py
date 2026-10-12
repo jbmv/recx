@@ -642,23 +642,34 @@ def test_stop_event_name_is_stop(capsys, monkeypatch, repo, name, expected):
     assert "lib" in context_of(stop(capsys, monkeypatch, repo, **kw)[1], expected)
 
 
-def test_once_per_set_across_subagent_stop_and_stop(capsys, monkeypatch, repo):
+def test_each_agent_has_its_own_set(capsys, monkeypatch, repo):
+    # A subagent's reminder never silences the session's, nor another subagent's.
     start(capsys, monkeypatch, repo)
     edit_lib(repo)
     assert "lib" in context_of(sub_stop(capsys, monkeypatch, repo)[1], "SubagentStop")
+    assert sub_stop(capsys, monkeypatch, repo) == (0, "")
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
     assert stop(capsys, monkeypatch, repo) == (0, "")
-    assert sub_stop(capsys, monkeypatch, repo, agent_id="a2") == (0, "")
+    assert reminded(sub_stop(capsys, monkeypatch, repo, agent_id="a2")[1]) == ["lib"]
     edit_tool(repo)
     text = context_of(stop(capsys, monkeypatch, repo, hook_event_name="Stop")[1], "Stop")
     assert "lib" in text and "tool" in text
+    assert "tool" in context_of(sub_stop(capsys, monkeypatch, repo)[1], "SubagentStop")
     assert sub_stop(capsys, monkeypatch, repo) == (0, "")
 
 
-def test_once_per_set_from_stop_to_subagent_stop(capsys, monkeypatch, repo):
+def test_session_reminder_does_not_silence_a_subagent(capsys, monkeypatch, repo):
     start(capsys, monkeypatch, repo)
     edit_lib(repo)
     assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
-    assert sub_stop(capsys, monkeypatch, repo) == (0, "")
+    assert reminded(sub_stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+
+
+def test_subagent_without_agent_id_shares_the_session_set(capsys, monkeypatch, repo):
+    start(capsys, monkeypatch, repo)
+    edit_lib(repo)
+    assert reminded(stop(capsys, monkeypatch, repo)[1]) == ["lib"]
+    assert stop(capsys, monkeypatch, repo, hook_event_name="SubagentStop", agent_type="general-purpose") == (0, "")
 
 
 def test_subagent_stop_blocks_on_invalid_manifest(capsys, monkeypatch, repo):
@@ -827,4 +838,6 @@ def test_scripts_end_to_end_subagent_stop(repo, tmp_path):
     r = sh(STOP_SCRIPT, json.dumps(sub), env)
     assert r.returncode == 0, r.stderr
     assert "tool" in context_of(r.stdout, "SubagentStop")
-    assert sh(STOP_SCRIPT, json.dumps({**base, "hook_event_name": "Stop"}), env).stdout == ""
+    main = json.dumps({**base, "hook_event_name": "Stop"})
+    assert reminded(sh(STOP_SCRIPT, main, env).stdout) == ["tool"]
+    assert sh(STOP_SCRIPT, main, env).stdout == ""
