@@ -61,6 +61,14 @@ anything listed can be reused without asking.
 
 Then add the GitHub topic `recx` to the repository, so the daily index finds it promptly.
 
+The plugin's hook runs when a session or one of its subagents stops (Claude Code's Stop and
+SubagentStop events). It blocks on an invalid manifest, and it reminds, without blocking, when
+files under a module's `path` changed during the session while RECX.yaml did not. A commit can
+record that module entries were checked against its tree with a trailer such as
+`Recx-Checked: lib, cli`; the reminder then disregards that commit's changes to those modules
+and the changes of the session's commits it descends from. `RECX_DRIFT_REMINDER=off` turns
+the reminder off. The [manifest skill](plugin/skills/manifest/SKILL.md) describes both in full.
+
 ## Searching
 
 ```sh

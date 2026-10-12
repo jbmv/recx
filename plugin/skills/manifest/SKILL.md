@@ -75,17 +75,27 @@ A change that touches none of these leaves the manifest alone. Do not churn it.
 ## The Stop hook
 
 With the recx plugin enabled, a Stop hook runs `recx check` whenever the repository has a
-`RECX.yaml`. If the manifest is invalid, you are sent back with the problems listed. Fix them;
-do not delete or weaken the manifest to make the hook pass. If the problems are still there on
-the next stop, the hook lets the session end and leaves a warning instead. The user controls the
-hook with `RECX_STOP_HOOK`: `block` (the default), `warn`, or `off`. Repositories without a
-`RECX.yaml` are never checked.
+`RECX.yaml`. The same hook runs when a subagent finishes (Claude Code's SubagentStop event), so
+a subagent meets it before handing back. If the manifest is invalid, you are sent back with the
+problems listed. Fix them; do not delete or weaken the manifest to make the hook pass. If the
+problems are still there on the next stop, the hook lets the session end and leaves a warning
+instead. The user controls the hook with `RECX_STOP_HOOK`: `block` (the default), `warn`, or
+`off`. Repositories without a `RECX.yaml` are never checked.
 
 Separately, the hook gives a non-blocking reminder when the manifest is valid but may be stale.
 If files at or under a module's `path` changed during the session (committed, uncommitted or
 untracked) and `RECX.yaml` did not, the hook names those modules and asks you to check whether
 the manifest still describes them. It never blocks, it reminds at most once per session for a
-given set of modules, and `RECX_DRIFT_REMINDER=off` turns it off.
+given set of modules (counting the session's subagents and the session itself together), and
+`RECX_DRIFT_REMINDER=off` turns it off.
+
+When you have checked a module's entry and it still describes the code, say so in the commit
+with a trailer, for example `Recx-Checked: lib, cli`. The key is case-insensitive, the trailer
+may be repeated, and module ids are separated by commas or spaces. A check vouches for the tree
+it was made on, so the reminder then disregards that commit's changes to the named modules and
+those of the session's earlier commits that it descends from. Later commits and uncommitted
+changes still count. Write the trailer only after reading the entry against the code; it is a
+statement that the check was made, not a way to silence the reminder.
 
 ## Reading someone else's manifest
 
