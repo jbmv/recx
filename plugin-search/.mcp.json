@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "recx": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--quiet", "--from", "recx-cli[mcp]>=0.1.2", "recx", "mcp"],
+      "env": {
+        "RECX_CACHE_DIR": "${CLAUDE_PLUGIN_DATA}/cache"
+      }
+    }
+  }
+}

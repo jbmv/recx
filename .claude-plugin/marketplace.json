@@ -1,12 +1,17 @@
 {
   "name": "recx",
   "owner": { "name": "James Bullard" },
-  "description": "Tools for RECX.yaml manifests: a skill to write one and a hook to keep it valid.",
+  "description": "Tools for RECX.yaml manifests: a skill to write one, a hook to keep it valid, and an opt-in search of other repositories' manifests.",
   "plugins": [
     {
       "name": "recx",
       "source": "./plugin",
       "description": "Write and maintain a RECX.yaml manifest, and keep it valid as a session ends."
+    },
+    {
+      "name": "recx-search",
+      "source": "./plugin-search",
+      "description": "Search the recx index for reusable modules in other repositories, through an MCP server and a skill for reading the results safely."
     }
   ]
 }

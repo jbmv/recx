@@ -1,0 +1,11 @@
+{
+  "name": "recx-search",
+  "version": "0.1.1",
+  "description": "Search the recx index for reusable modules in other repositories, through an MCP server and a skill for reading the results safely.",
+  "author": {
+    "name": "James Bullard"
+  },
+  "homepage": "https://github.com/jbmv/recx",
+  "repository": "https://github.com/jbmv/recx",
+  "license": "MIT"
+}

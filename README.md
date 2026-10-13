@@ -93,6 +93,16 @@ only in a sandbox. [docs/integrating.md](docs/integrating.md) explains how to ca
 another tool, and [docs/design/search.md](docs/design/search.md) describes the index, the crawler
 and the ranking in full.
 
+Agents can also search through an MCP server, `recx mcp`, which offers the same search as two
+read-only tools, `recx_search` and `recx_show`. In Claude Code it comes with a second plugin,
+`recx-search`, from the same marketplace: `/plugin install recx-search@recx`. The plugin is
+separate so that sessions which only maintain a manifest do not start the server or carry its
+tool definitions. It also adds the `recx-search:find` skill, which tells the agent when to
+search while planning, how to read results, and how to record a reuse in its own manifest.
+Other MCP clients can run the same server with their own configuration, for example
+`claude mcp add recx -- uvx --from 'recx-cli[mcp]' recx mcp`. The server needs recx-cli 0.1.2
+or later with the `mcp` extra.
+
 ## What's here
 
 | | |
@@ -100,7 +110,8 @@ and the ranking in full.
 | [spec/](spec/) | The spec, its JSON Schema, and valid and invalid example manifests |
 | `recx-cli` on PyPI | `recx check`, `recx evidence`, `recx search` and `recx show` (`pip install recx-cli`) |
 | `@jbmv/recx` on npm | The schema and examples, for JavaScript tooling |
-| [plugin/](plugin/) | The Claude Code plugin; this repository is its marketplace |
+| [plugin/](plugin/) | The `recx` Claude Code plugin; this repository is its marketplace |
+| [plugin-search/](plugin-search/) | The opt-in `recx-search` plugin: the MCP server entry and the `recx-search:find` skill |
 | [crawler/](crawler/) | The daily crawler that builds the search index, run by a scheduled workflow |
 | [docs/design/](docs/design/) | Design documents |
 | [RECX.yaml](RECX.yaml) | recx's own manifest |
@@ -110,8 +121,7 @@ and the ranking in full.
 Experimental. The spec is a v0.1 draft and may change before 1.0; every manifest states the
 version it was written against. `recx check` enforces the whole spec except rule 4, that the
 license file matches `license`; the search crawler applies it as far as GitHub's licence
-detection allows. Search is in its first version: it ranks by keywords, has no synonym handling,
-and has no MCP server yet.
+detection allows. Search is in its first version: it ranks by keywords and has no synonym handling.
 
 ## Kyosei
 
