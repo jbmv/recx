@@ -523,7 +523,7 @@ A second plugin, `recx-search`, in the same marketplace (`.claude-plugin/marketp
 gains an entry pointing at a new `plugin-search/` directory). It contains:
 
 - `.mcp.json` declaring one stdio server, `recx`, with `command: "uvx"` and
-  `args: ["--quiet", "--from", "recx-cli[mcp]>=0.1.0", "recx", "mcp"]`, and
+  `args: ["--quiet", "--from", "recx-cli[mcp]>=0.1.2", "recx", "mcp"]`, and
   `env: {"RECX_CACHE_DIR": "${CLAUDE_PLUGIN_DATA}/cache"}`.
 - A skill, `recx-search:find`, which says when to search (while planning a capability the
   project does not have yet), how to read results (section 5), and how to record a reuse

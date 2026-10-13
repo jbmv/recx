@@ -53,6 +53,7 @@ modules:
         - "recx evidence [PATH] [--list] [--only ID ...]"
         - "recx search QUERY... [--json] [--limit N] [--language TAG] [--interface TYPE] [--license ID]"
         - "recx show OWNER/NAME [--json]"
+        - "recx mcp"
         - "recx_cli.search.search(query, limit=20) -> dict"
         - "recx hook stop"
     requires:
@@ -77,6 +78,22 @@ modules:
     extract:
       method: copy
       notes: Installing through the marketplace is the intended route; copying plugin/ works but the hook then needs recx-cli 0.1.1 or later.
+  - id: search-plugin
+    path: plugin-search/
+    summary: An opt-in Claude Code plugin that starts recx's MCP server, with the recx_search and recx_show tools, and the recx-search:find skill on reading results safely.
+    interface:
+      type: claude-code-plugin
+      entrypoints:
+        - "/plugin marketplace add jbmv/recx"
+        - "/plugin install recx-search@recx"
+        - "/recx-search:find"
+    requires:
+      packages:
+        - pkg:pypi/mcp
+      modules: [validator]
+    extract:
+      method: copy
+      notes: Installing through the marketplace is the intended route; the server runs through uvx from recx-cli[mcp] 0.1.2 or later.
   - id: action
     path: action.yml
     summary: A composite GitHub Action that runs recx check, and optionally recx evidence, in a repository's CI.
