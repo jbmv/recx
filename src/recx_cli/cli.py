@@ -1,4 +1,4 @@
-"""Command line: `recx check`, `recx evidence`, `recx search`, `recx show`, `recx hook stop`."""
+"""Command line: `recx check`, `recx evidence`, `recx search`, `recx show`, `recx mcp`, `recx hook stop`."""
 
 from __future__ import annotations
 
@@ -99,6 +99,21 @@ def _run_index_command(args) -> int:
     return 0
 
 
+def _run_mcp() -> int:
+    from importlib.util import find_spec
+
+    if find_spec("mcp") is None:
+        print(
+            "recx mcp: the MCP server needs the optional 'mcp' extra, which is not installed.\n"
+            "Run it with: uvx --from 'recx-cli[mcp]' recx mcp",
+            file=sys.stderr,
+        )
+        return 2
+    from recx_cli.mcp_server import main as serve
+
+    return serve()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = _Parser(prog="recx", description="Tools for RECX.yaml manifests.")
     parser.add_argument("--version", action="version", version=f"recx {_version()}")
@@ -160,6 +175,13 @@ def build_parser() -> argparse.ArgumentParser:
     sh.add_argument("full_name", metavar="OWNER/NAME")
     sh.add_argument("--json", action="store_true", help="print the JSON object")
     _index_options(sh)
+    sub.add_parser(
+        "mcp",
+        help="start the stdio MCP server (needs the recx-cli[mcp] extra)",
+        description="Serve recx_search and recx_show over stdio for MCP clients. Reads the index only. "
+        "Needs the optional extra: uvx --from 'recx-cli[mcp]' recx mcp. "
+        "Exit status: 0 on a clean shutdown, 2 when the extra is not installed.",
+    )
     hook = sub.add_parser(
         "hook",
         help="entry points for Claude Code hooks",
@@ -192,6 +214,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("show: expected OWNER/NAME, for example jbmv/recx")
     if args.command in ("search", "show"):
         return _run_index_command(args)
+    if args.command == "mcp":
+        return _run_mcp()
     if args.command == "hook":
         from recx_cli.hook import session_start, stop
 
