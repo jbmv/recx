@@ -5,8 +5,9 @@ description: |
   res extra commercium: things outside commerce. A repository drops RECX.yaml at
   its root to say what it does, which of its modules can be taken on their own,
   how to take them, and which checks anyone can rerun to see that they work.
-  GitHub code search on the filename is the index, so there is no service to
-  run. This repository holds the spec, and it is the spec's first adopter.
+  A scheduled workflow here finds manifests through GitHub search and
+  publishes a daily index as a static file, so there is no service to run.
+  This repository holds the spec, and it is the spec's first adopter.
 license: MIT
 status: experimental
 capabilities:
