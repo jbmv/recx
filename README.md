@@ -125,9 +125,13 @@ detection allows. Search is in its first version: it ranks by keywords and has n
 
 ## Kyosei
 
-I built recx for Kyosei, a record-keeping tool for running projects with coding agents. Kyosei
-isn't public yet. It will generate its own RECX.yaml from its records. Nothing in the spec
-depends on Kyosei: it is one client of the spec, like any other tool.
+I built recx for [Kyosei](https://github.com/jbmv/kyosei), a record-keeping tool for running
+projects with coding agents. Kyosei uses recx in two optional ways: it can search the index for
+prior art when a proposal is filed, and it can treat a project's RECX.yaml as a governed
+document, so that a change under a module's `path` raises the question of whether that module's
+entry is still accurate. Kyosei publishes its own
+[RECX.yaml](https://github.com/jbmv/kyosei/blob/main/RECX.yaml). Nothing in the spec depends on
+Kyosei: it is one client of the spec, like any other tool.
 
 ## License
 
